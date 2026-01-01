@@ -1,0 +1,44 @@
+display-name: "&bDefault Lootbox"
+item:
+  material: ender_chest
+  name: "&b&lDEFAULT &fLootbox &7[Right-Click]"
+  lore:
+    - "&8- Lootbox"
+    - ""
+    - "&eRight Click to open the Box"
+
+visual:
+  animation: default
+  hologram:
+    - "&b&lDEFAULT LOOTBOX"
+    - ""
+    - "&fOpened by {player}"
+    - "&7store.example.com"
+
+reward-settings:
+  prize-size:
+    normal: 8
+    final: 2
+
+  normal-rewards:
+    money:
+      chance: 10
+      item:
+        give-item: false
+        amount: 1 # ha give-item true akkor lehet amount amugy ha nincs akkor nem csinal semmit
+        material: EMERALD
+        name: "&a$500"
+        lore:
+          - "&fMoney"
+      commands:
+        - "eco give {player} 500"
+
+  final-rewards:
+    money+:
+      chance: 0.5
+      item:
+        give-item: true
+        material: EMERALD
+        name: "&a$50,000"
+        lore:
+          - "&fMoney"

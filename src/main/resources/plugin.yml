@@ -1,0 +1,7 @@
+name: mc-Lootbox
+version: '1.0.0'
+main: com.mongenscave.mclootbox.McLootbox
+api-version: '1.21'
+author: "kxtsoo"
+
+folia-supported: true

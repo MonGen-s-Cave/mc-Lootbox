@@ -1,0 +1,7 @@
+prefix: "&#BEE048[Lootbox]"
+
+messages:
+  admin:
+    reload: "{prefix} &aPlugin files has been reloaded successfully."
+
+version: '1'
