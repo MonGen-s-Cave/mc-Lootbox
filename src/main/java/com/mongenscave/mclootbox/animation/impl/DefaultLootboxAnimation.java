@@ -32,15 +32,23 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     private static final int NORMAL_REVEAL_DELAY = 30;
 
     private static final int SUCK_IN_DURATION = 30;
-    private static final int FINAL_SLIDE_DURATION = 40;
+    private static final int FINAL_SLIDE_DURATION = 50;
     private static final int CENTER_SHRINK_DURATION = 20;
 
     private static final double ORBIT_RADIUS = 1.61;
     private static final double ORBIT_Y = 0.15;
 
     private static final float PREVIEW_SCALE = 0.5f;
-    private static final float WIN_SCALE = 0.8f;
-    private static final float FINAL_WIN_SCALE = 0.9f;
+    private static final float WIN_SCALE = 0.7f;
+
+    private static final float FINAL_WIN_SCALE = 0.7f;
+    private static final int FINAL_RISE_DURATION = 20;
+    private static final double FINAL_RISE_Y = 0.30;
+
+    private static final int FINAL_SUSPENSE_CYCLES = 14;
+    private static final int FINAL_SUSPENSE_STEP_TICKS = 6;
+    private static final float FINAL_SUSPENSE_SCALE = 0.85f;
+    private static final int FINAL_SUSPENSE_RESET_DELAY = 8;
 
     @Override
     public void start(AnimationContext context) {
@@ -48,6 +56,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     }
 
     private void run(@NotNull AnimationContext context) {
+        float openYaw = context.player().getLocation().getYaw();
 
         Location base = context.player().getEyeLocation()
                 .add(context.player().getLocation().getDirection().normalize().multiply(2.8))
@@ -67,6 +76,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         int[] tick = {0};
         int[] spawnIndex = {0};
         int[] revealIndex = {0};
+        boolean[] cutPlayed = {false};
 
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
             try {
@@ -118,22 +128,51 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                             0.12,
                             0.02
                     );
-
-                    context.player().playSound(
-                            context.player().getLocation(),
-                            Sound.BLOCK_DECORATED_POT_INSERT,
-                            0.8f,
-                            1.4f
-                    );
                 }
 
                 if (orbitTick < ORBIT_SPIN_TICKS) {
                     rotateOrbit(base, previews.values(), orbitTick * 0.08);
+
+                    if (orbitTick % 4 == 0) {
+                        float progress = orbitTick / (float) ORBIT_SPIN_TICKS;
+
+                        float pitch = 0.8f + progress * 0.6f;
+                        float volume = 0.4f + progress * 0.2f;
+
+                        context.player().playSound(
+                                context.player().getLocation(),
+                                Sound.BLOCK_NOTE_BLOCK_HAT,
+                                volume,
+                                pitch
+                        );
+
+                        if (orbitTick % 12 == 0) {
+                            context.player().playSound(
+                                    context.player().getLocation(),
+                                    Sound.BLOCK_AMETHYST_BLOCK_CHIME,
+                                    0.25f,
+                                    1.2f + progress * 0.4f
+                            );
+                        }
+                    }
+
                     tick[0]++;
                     return;
                 }
 
                 if (orbitTick < ORBIT_SPIN_TICKS + ORBIT_STOP_TICKS) {
+
+                    if (!cutPlayed[0]) {
+                        cutPlayed[0] = true;
+
+                        context.player().playSound(
+                                context.player().getLocation(),
+                                Sound.BLOCK_NOTE_BLOCK_BASS,
+                                0.9f,
+                                0.6f
+                        );
+                    }
+
                     rotateOrbit(base, previews.values(), ORBIT_SPIN_TICKS * 0.08);
                     tick[0]++;
                     return;
@@ -155,12 +194,18 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                     }
 
                     LootboxRewardService.give(context.player(), reward);
+                    context.player().playSound(
+                            context.player().getLocation(),
+                            Sound.UI_BUTTON_CLICK,
+                            0.8f,
+                            1.4f
+                    );
                 }
 
                 if (revealIndex[0] >= normalWon.size()) {
                     task[0].cancel();
-                    suckInNormalRewards(center, previews.values(), context);
-                    startFinalPhase(context, center, finalPool, finalWon);
+                    suckInNormalRewards(center, previews.values());
+                    startFinalPhase(context, center, finalPool, finalWon, openYaw);
                     return;
                 }
 
@@ -174,7 +219,212 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         }, 0L, 1L);
     }
 
-    private void suckInNormalRewards(@NotNull ItemDisplay center, @NotNull Collection<ItemDisplay> previews, AnimationContext context) {
+    private void startFinalPhase(AnimationContext context, @NotNull ItemDisplay center, @NotNull List<LootboxReward> finalPool, List<LootboxReward> finalWon, float openYaw) {
+        Location base = center.getLocation().clone().add(0, 1.2, 0);
+
+        Quaternionf fixedRotation = yawRotation(openYaw);
+
+        Vector3f forward = new Vector3f(
+                -(float) Math.sin(Math.toRadians(openYaw)),
+                0f,
+                (float) Math.cos(Math.toRadians(openYaw))
+        ).normalize();
+
+        Vector3f right = new Vector3f(-forward.z, 0f, forward.x);
+
+        double spacing = 1.15;
+        double startOffset = -(finalPool.size() - 1) * spacing / 2.0;
+
+        List<ItemDisplay> displays = new ArrayList<>();
+        Map<ItemDisplay, Location> targets = new HashMap<>();
+
+        for (int i = 0; i < finalPool.size(); i++) {
+            LootboxReward reward = finalPool.get(i);
+
+            ItemDisplay d = base.getWorld().spawn(base, ItemDisplay.class);
+            d.setItemStack(previewItem(reward));
+            d.setBillboard(Display.Billboard.FIXED);
+
+            d.setTransformation(new Transformation(
+                    new Vector3f(),
+                    fixedRotation,
+                    new Vector3f(PREVIEW_SCALE, PREVIEW_SCALE, PREVIEW_SCALE),
+                    new Quaternionf()
+            ));
+
+            double offset = startOffset + i * spacing;
+            Location target = base.clone().add(
+                    right.x * offset,
+                    0,
+                    right.z * offset
+            );
+
+            displays.add(d);
+            targets.put(d, target);
+        }
+
+        animateFinalReveal(context, center, displays, targets, fixedRotation, finalPool, finalWon);
+    }
+
+    private void animateFinalReveal(AnimationContext context, ItemDisplay center, @NotNull List<ItemDisplay> displays, Map<ItemDisplay, Location> targets, Quaternionf fixedRotation, List<LootboxReward> finalPool, List<LootboxReward> finalWon) {
+        Map<ItemDisplay, Location> start = new HashMap<>();
+        displays.forEach(d -> start.put(d, d.getLocation()));
+
+        MyScheduledTask[] task = new MyScheduledTask[1];
+        int[] tick = {0};
+
+        task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
+            double t = tick[0] / (double) FINAL_SLIDE_DURATION;
+            double ease = 1 - Math.pow(1 - t, 3);
+
+            for (ItemDisplay d : displays) {
+                Location s = start.get(d);
+                Location target = targets.get(d);
+
+                d.teleport(new Location(
+                        s.getWorld(),
+                        lerp(s.getX(), target.getX(), ease),
+                        lerp(s.getY(), target.getY(), ease),
+                        lerp(s.getZ(), target.getZ(), ease)
+                ));
+
+                d.setTransformation(new Transformation(
+                        new Vector3f(),
+                        fixedRotation,
+                        new Vector3f(PREVIEW_SCALE, PREVIEW_SCALE, PREVIEW_SCALE),
+                        new Quaternionf()
+                ));
+            }
+
+            if (++tick[0] >= FINAL_SLIDE_DURATION) {
+                task[0].cancel();
+
+                playFinalSuspense(
+                        context,
+                        center,
+                        displays,
+                        fixedRotation,
+                        finalPool,
+                        finalWon
+                );
+            }
+        }, 0L, 1L);
+    }
+
+    private void revealFinalWinners(AnimationContext context, ItemDisplay center, List<ItemDisplay> displays, List<LootboxReward> finalPool, @NotNull List<LootboxReward> finalWon, Quaternionf fixedRotation) {
+        int delay = 40;
+
+        for (LootboxReward reward : finalWon) {
+            ItemDisplay win = displays.get(finalPool.indexOf(reward));
+
+            McLootbox.getScheduler().runTaskLater(() -> {
+
+                Location startLoc = win.getLocation();
+                Location endLoc = startLoc.clone().add(0, FINAL_RISE_Y, 0);
+
+                MyScheduledTask[] riseTask = new MyScheduledTask[1];
+                int[] tick = {0};
+
+                context.player().playSound(
+                        context.player().getLocation(),
+                        Sound.UI_TOAST_CHALLENGE_COMPLETE,
+                        1.0f,
+                        1.0f
+                );
+
+                context.player().playSound(
+                        context.player().getLocation(),
+                        Sound.ENTITY_PLAYER_LEVELUP,
+                        0.9f,
+                        1.35f
+                );
+
+                riseTask[0] = McLootbox.getScheduler().runTaskTimer(() -> {
+                    double t = tick[0] / (double) FINAL_RISE_DURATION;
+                    double ease = 1 - Math.pow(1 - t, 3);
+
+                    win.teleport(new Location(
+                            startLoc.getWorld(),
+                            lerp(startLoc.getX(), endLoc.getX(), ease),
+                            lerp(startLoc.getY(), endLoc.getY(), ease),
+                            lerp(startLoc.getZ(), endLoc.getZ(), ease)
+                    ));
+
+                    float scale = (float) (FINAL_WIN_SCALE + 0.15 * ease);
+
+                    win.setTransformation(new Transformation(
+                            new Vector3f(),
+                            fixedRotation,
+                            new Vector3f(scale, scale, scale),
+                            new Quaternionf()
+                    ));
+
+                    if (++tick[0] >= FINAL_RISE_DURATION) {
+                        riseTask[0].cancel();
+                    }
+
+                }, 0L, 1L);
+
+                LootboxRewardService.give(context.player(), reward);
+
+            }, delay);
+
+            delay += 45;
+        }
+
+        McLootbox.getScheduler().runTaskLater(() -> {
+            displays.forEach(ItemDisplay::remove);
+            shrinkAndRemoveCenter(center, context);
+        }, delay + 30);
+    }
+
+    @NotNull
+    private ItemDisplay spawnCenter(@NotNull Location base, @NotNull ItemStack item) {
+        ItemDisplay d = base.getWorld().spawn(base, ItemDisplay.class);
+        d.setItemStack(item.clone());
+
+        return d;
+    }
+
+    @NotNull
+    private ItemDisplay spawnPreview(@NotNull Location base, ItemStack item) {
+        ItemDisplay d = base.getWorld().spawn(base, ItemDisplay.class);
+        d.setItemStack(item);
+        d.setTransformation(new Transformation(
+                new Vector3f(),
+                new Quaternionf(),
+                new Vector3f(PREVIEW_SCALE, PREVIEW_SCALE, PREVIEW_SCALE),
+                new Quaternionf()
+        ));
+        return d;
+    }
+
+    @NotNull
+    @Contract("_ -> new")
+    private ItemStack previewItem(@NotNull LootboxReward reward) {
+        return new ItemStack(Material.valueOf(reward.getMaterial().toUpperCase()));
+    }
+
+    private Quaternionf yawRotation(float yaw) {
+        float radians = (float) Math.toRadians(-yaw);
+        return new Quaternionf().rotateY(radians);
+    }
+
+    private void rotateOrbit(Location base, @NotNull Collection<ItemDisplay> displays, double angleBase) {
+        int size = displays.size();
+        int index = 0;
+
+        for (ItemDisplay d : displays) {
+            double angle = angleBase + (2 * Math.PI / size) * index++;
+            d.teleport(base.clone().add(
+                    Math.cos(angle) * ORBIT_RADIUS,
+                    ORBIT_Y,
+                    Math.sin(angle) * ORBIT_RADIUS
+            ));
+        }
+    }
+
+    private void suckInNormalRewards(@NotNull ItemDisplay center, @NotNull Collection<ItemDisplay> previews) {
         Location target = center.getLocation();
 
         Map<ItemDisplay, Location> start = new HashMap<>();
@@ -208,138 +458,59 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
             if (++tick[0] >= SUCK_IN_DURATION) {
                 previews.forEach(ItemDisplay::remove);
-
-                context.player().playSound(
-                        context.player().getLocation(),
-                        Sound.ENTITY_ENDERMAN_TELEPORT,
-                        0.7f,
-                        1.6f
-                );
-
                 task[0].cancel();
             }
         }, 0L, 1L);
     }
 
-    private void startFinalPhase(@NotNull AnimationContext context, @NotNull ItemDisplay center, @NotNull List<LootboxReward> finalPool, List<LootboxReward> finalWon) {
-        Location base = center.getLocation().clone().add(0, 1.2, 0);
-
-        Vector3f toPlayer = new Vector3f(
-                (float) (context.player().getLocation().getX() - base.getX()),
-                0f,
-                (float) (context.player().getLocation().getZ() - base.getZ())
-        ).normalize();
-
-        Vector3f rightVector = new Vector3f(-toPlayer.z, 0f, toPlayer.x);
-
-        double spacing = 1.15;
-        double startOffset = -(finalPool.size() - 1) * spacing / 2.0;
-
-        List<ItemDisplay> displays = new ArrayList<>();
-        Map<ItemDisplay, Location> targets = new HashMap<>();
-        Map<ItemDisplay, Quaternionf> rotations = new HashMap<>();
-
-        Quaternionf rot = facePlayerYaw(base, context.player().getLocation());
-
-        for (int i = 0; i < finalPool.size(); i++) {
-            LootboxReward reward = finalPool.get(i);
-
-            ItemDisplay d = base.getWorld().spawn(base, ItemDisplay.class);
-            d.setItemStack(new ItemStack(Material.valueOf(reward.getMaterial().toUpperCase())));
-            d.setBillboard(Display.Billboard.FIXED);
-
-            d.setTransformation(new Transformation(
-                    new Vector3f(),
-                    rot,
-                    new Vector3f(0.5f, 0.5f, 0.5f),
-                    new Quaternionf()
-            ));
-
-            double offset = startOffset + i * spacing;
-            Location target = base.clone().add(
-                    rightVector.x * offset,
-                    0,
-                    rightVector.z * offset
-            );
-
-            displays.add(d);
-            targets.put(d, target);
-            rotations.put(d, rot);
-        }
-
-        animateFinalReveal(context, center, displays, targets, rotations, finalPool, finalWon);
-    }
-
-    private void animateFinalReveal(AnimationContext context, ItemDisplay center, @NotNull List<ItemDisplay> displays, Map<ItemDisplay, Location> targets, Map<ItemDisplay, Quaternionf> rotations, List<LootboxReward> finalPool, List<LootboxReward> finalWon) {
-        Map<ItemDisplay, Location> start = new HashMap<>();
-        displays.forEach(d -> start.put(d, d.getLocation()));
+    private void playFinalSuspense(AnimationContext context, ItemDisplay center, @NotNull List<ItemDisplay> displays, Quaternionf fixedRotation, List<LootboxReward> finalPool, List<LootboxReward> finalWon) {
+        int totalSteps = displays.size() * FINAL_SUSPENSE_CYCLES;
 
         MyScheduledTask[] task = new MyScheduledTask[1];
-        int[] tick = {0};
+        int[] step = {0};
 
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
-            double t = tick[0] / (double) FINAL_SLIDE_DURATION;
-            double ease = 1 - Math.pow(1 - t, 3);
 
-            for (ItemDisplay d : displays) {
-                Location s = start.get(d);
-                Location target = targets.get(d);
+            int index = step[0] % displays.size();
 
-                d.teleport(new Location(
-                        s.getWorld(),
-                        lerp(s.getX(), target.getX(), ease),
-                        lerp(s.getY(), target.getY(), ease),
-                        lerp(s.getZ(), target.getZ(), ease)
-                ));
+            for (int i = 0; i < displays.size(); i++) {
+                ItemDisplay d = displays.get(i);
+
+                float scale = (i == index)
+                        ? FINAL_SUSPENSE_SCALE
+                        : PREVIEW_SCALE;
 
                 d.setTransformation(new Transformation(
                         new Vector3f(),
-                        rotations.get(d),
-                        new Vector3f(0.5f, 0.5f, 0.5f),
+                        fixedRotation,
+                        new Vector3f(scale, scale, scale),
                         new Quaternionf()
                 ));
             }
 
-            if (++tick[0] >= FINAL_SLIDE_DURATION) {
+            context.player().playSound(
+                    context.player().getLocation(),
+                    Sound.BLOCK_NOTE_BLOCK_BASEDRUM,
+                    0.8f,
+                    1.0f + (step[0] * 0.04f)
+            );
+
+            if (++step[0] >= totalSteps) {
                 task[0].cancel();
-                revealFinalWinners(context, center, displays, finalPool, finalWon);
+
+                for (ItemDisplay d : displays) {
+                    d.setTransformation(new Transformation(
+                            new Vector3f(),
+                            fixedRotation,
+                            new Vector3f(PREVIEW_SCALE, PREVIEW_SCALE, PREVIEW_SCALE),
+                            new Quaternionf()
+                    ));
+                }
+
+                McLootbox.getScheduler().runTaskLater(() -> revealFinalWinners(context, center, displays, finalPool, finalWon, fixedRotation), FINAL_SUSPENSE_RESET_DELAY);
             }
-        }, 0L, 1L);
-    }
 
-    private void revealFinalWinners(AnimationContext context, ItemDisplay center, List<ItemDisplay> displays, List<LootboxReward> finalPool, @NotNull List<LootboxReward> finalWon) {
-        int delay = 40;
-
-        for (LootboxReward reward : finalWon) {
-            ItemDisplay win = displays.get(finalPool.indexOf(reward));
-
-            McLootbox.getScheduler().runTaskLater(() -> {
-                win.getWorld().strikeLightningEffect(win.getLocation());
-
-                win.setTransformation(new Transformation(
-                        new Vector3f(),
-                        new Quaternionf(),
-                        new Vector3f(FINAL_WIN_SCALE, FINAL_WIN_SCALE, FINAL_WIN_SCALE),
-                        new Quaternionf()
-                ));
-
-                context.player().playSound(
-                        context.player().getLocation(),
-                        Sound.ENTITY_LIGHTNING_BOLT_THUNDER,
-                        1f,
-                        0.9f
-                );
-
-                LootboxRewardService.give(context.player(), reward);
-            }, delay);
-
-            delay += 45;
-        }
-
-        McLootbox.getScheduler().runTaskLater(() -> {
-            displays.forEach(ItemDisplay::remove);
-            shrinkAndRemoveCenter(center, context);
-        }, delay + 30);
+        }, 0L, FINAL_SUSPENSE_STEP_TICKS);
     }
 
     private void shrinkAndRemoveCenter(ItemDisplay center, AnimationContext context) {
@@ -348,9 +519,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
             double t = tick[0] / (double) CENTER_SHRINK_DURATION;
-            double ease = 1 - Math.pow(1 - t, 3);
-
-            float scale = (float) (1 - ease);
+            float scale = (float) (1 - (1 - Math.pow(1 - t, 3)));
 
             center.setTransformation(new Transformation(
                     new Vector3f(),
@@ -367,48 +536,6 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         }, 0L, 1L);
     }
 
-    private void rotateOrbit(Location base, @NotNull Collection<ItemDisplay> displays, double angleBase) {
-        int size = displays.size();
-        int index = 0;
-
-        for (ItemDisplay d : displays) {
-            double angle = angleBase + (2 * Math.PI / size) * index++;
-
-            double x = Math.cos(angle) * ORBIT_RADIUS;
-            double z = Math.sin(angle) * ORBIT_RADIUS;
-
-            d.teleport(base.clone().add(x, ORBIT_Y, z));
-        }
-    }
-
-    @NotNull
-    private ItemDisplay spawnCenter(@NotNull Location base, @NotNull ItemStack item) {
-        ItemDisplay d = base.getWorld().spawn(base, ItemDisplay.class);
-        d.setItemStack(item.clone());
-
-        return d;
-    }
-
-    @NotNull
-    private ItemDisplay spawnPreview(@NotNull Location base, ItemStack item) {
-        ItemDisplay d = base.getWorld().spawn(base, ItemDisplay.class);
-        d.setItemStack(item);
-        d.setTransformation(new Transformation(
-                new Vector3f(),
-                new Quaternionf(),
-                new Vector3f(PREVIEW_SCALE, PREVIEW_SCALE, PREVIEW_SCALE),
-                new Quaternionf()
-        ));
-
-        return d;
-    }
-
-    @NotNull
-    @Contract("_ -> new")
-    private ItemStack previewItem(@NotNull LootboxReward reward) {
-        return new ItemStack(Material.valueOf(reward.getMaterial().toUpperCase()));
-    }
-
     private void cleanup(ItemDisplay center, @NotNull Collection<ItemDisplay> previews, AnimationContext context) {
         previews.forEach(ItemDisplay::remove);
         if (center != null) center.remove();
@@ -417,14 +544,5 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
     private double lerp(double a, double b, double t) {
         return a + (b - a) * t;
-    }
-
-    private Quaternionf facePlayerYaw(@NotNull Location itemLoc, @NotNull Location playerLoc) {
-        double dx = playerLoc.getX() - itemLoc.getX();
-        double dz = playerLoc.getZ() - itemLoc.getZ();
-
-        float yaw = (float) Math.atan2(-dx, dz) + (float) Math.PI;
-
-        return new Quaternionf().rotateY(yaw);
     }
 }
