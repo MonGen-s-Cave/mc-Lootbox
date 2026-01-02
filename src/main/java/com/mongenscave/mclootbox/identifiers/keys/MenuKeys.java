@@ -9,7 +9,10 @@ import java.util.List;
 
 public enum MenuKeys {
     SUMMARY_MENU_TITLE("summary-menu.title"),
-    SUMMARY_MENU_SIZE("summary-menu.size");
+    SUMMARY_MENU_SIZE("summary-menu.size"),
+
+    PREVIEW_MENU_TITLE("preview-menu.title"),
+    PREVIEW_MENU_SIZE("preview-menu.size");
 
     private static final Config config = McLootbox.getInstance().getGuis();
     private final String path;

@@ -5,82 +5,87 @@ import com.mongenscave.mclootbox.guis.Menu;
 import com.mongenscave.mclootbox.identifiers.keys.ItemKeys;
 import com.mongenscave.mclootbox.identifiers.keys.MenuKeys;
 import com.mongenscave.mclootbox.item.ItemFactory;
-import com.mongenscave.mclootbox.model.LootboxSummary;
+import com.mongenscave.mclootbox.model.Lootbox;
+import com.mongenscave.mclootbox.model.LootboxReward;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("deprecation")
-public final class LootboxSummaryMenu extends Menu {
-    private final LootboxSummary entry;
+public final class LootboxPreviewMenu extends Menu {
 
-    public LootboxSummaryMenu(@NotNull MenuController controller, @NotNull LootboxSummary entry) {
+    private final Lootbox lootbox;
+
+    public LootboxPreviewMenu(@NotNull MenuController controller, @NotNull Lootbox lootbox) {
         super(controller);
-        this.entry = entry;
+        this.lootbox = lootbox;
     }
 
     @Override
     public void setMenuItems() {
         inventory.clear();
 
-        ItemFactory.setItemsForMenu("summary-menu.items", inventory);
+        ItemFactory.setItemsForMenu("preview-menu.items", inventory);
 
-        ItemStack close = ItemKeys.SUMMARY_CLOSE.getItem();
-        for (int slot : ItemKeys.SUMMARY_CLOSE.getSlot()) {
+        ItemStack close = ItemKeys.PREVIEW_CLOSE.getItem();
+        for (int slot : ItemKeys.PREVIEW_CLOSE.getSlot()) {
             inventory.setItem(slot, close);
         }
 
-        ItemStack template = ItemKeys.SUMMARY_REWARD_TEMPLATE.getItem();
+        ItemStack template = ItemKeys.PREVIEW_REWARD_TEMPLATE.getItem();
         if (template == null) return;
 
         int slot = 0;
 
-        for (ItemStack reward : entry.items()) {
+        List<LootboxReward> ordered = new ArrayList<>();
+        ordered.addAll(lootbox.getNormalRewards().getRewards());
+        ordered.addAll(lootbox.getFinalRewards().getRewards());
+
+        for (LootboxReward reward : ordered) {
             if (slot >= inventory.getSize()) break;
 
-            String rewardName = reward.hasItemMeta() && reward.getItemMeta().hasDisplayName()
-                    ? reward.getItemMeta().getDisplayName()
-                    : reward.getType().name();
+            ItemStack base = reward.createDisplayItem().orElse(null);
+            if (base == null) continue;
 
-            ItemStack display = reward.clone();
-            display.setAmount(1);
+            base.setAmount(1);
 
-            display.editMeta(meta -> {
+            String rewardName = base.hasItemMeta() && base.getItemMeta().hasDisplayName()
+                    ? base.getItemMeta().getDisplayName()
+                    : base.getType().name();
 
+            base.editMeta(meta -> {
                 meta.setDisplayName(MessageProcessor.process(
                         template.getItemMeta().getDisplayName()
                                 .replace("{reward_name}", rewardName)
                                 .replace("{reward_amount}", String.valueOf(reward.getAmount()))
-                                .replace("{lootbox}", entry.title())
-                                .replace("{grant_type}", "Lootbox")
+                                .replace("{lootbox}", lootbox.getDisplayName())
+                                .replace("{chance}", formatChance(reward.getChance()))
                 ));
 
                 List<String> finalLore = new ArrayList<>();
 
                 List<String> templateLore = template.getItemMeta().getLore();
-                List<String> rewardLore = reward.hasItemMeta()
-                        ? reward.getItemMeta().getLore()
-                        : null;
+                List<String> rewardLore = base.getItemMeta().getLore();
 
                 if (templateLore != null) {
                     for (String line : templateLore) {
+
                         if (line.contains("{reward_lore}") && rewardLore != null) {
-                            for (String rewardLine : rewardLore) {
-                                finalLore.add(MessageProcessor.process(rewardLine
-                                        .replace("{lootbox}", entry.title()))
-                                );
+                            for (String rl : rewardLore) {
+                                finalLore.add(MessageProcessor.process(rl));
                             }
                             continue;
                         }
 
                         finalLore.add(MessageProcessor.process(line.replace("{reward_name}", rewardName)
                                 .replace("{reward_amount}", String.valueOf(reward.getAmount()))
-                                .replace("{lootbox}", entry.title())
-                                .replace("{grant_type}", "Lootbox")
+                                .replace("{lootbox}", lootbox.getDisplayName())
+                                .replace("{chance}", formatChance(reward.getChance()))
                         ));
                     }
                 }
@@ -88,7 +93,7 @@ public final class LootboxSummaryMenu extends Menu {
                 meta.setLore(finalLore);
             });
 
-            inventory.setItem(slot++, display);
+            inventory.setItem(slot++, base);
         }
     }
 
@@ -97,11 +102,9 @@ public final class LootboxSummaryMenu extends Menu {
         event.setCancelled(true);
 
         int raw = event.getRawSlot();
-        int size = inventory.getSize();
+        if (raw >= inventory.getSize()) return;
 
-        if (raw >= size) return;
-
-        if (ItemKeys.SUMMARY_CLOSE.getSlot().contains(raw)) {
+        if (ItemKeys.PREVIEW_CLOSE.getSlot().contains(raw)) {
             menuController.owner().closeInventory();
             close();
         }
@@ -110,16 +113,22 @@ public final class LootboxSummaryMenu extends Menu {
     @NotNull
     @Override
     public String getMenuName() {
-        return MessageProcessor.process(MenuKeys.SUMMARY_MENU_TITLE.getString());
+        return MessageProcessor.process(MenuKeys.PREVIEW_MENU_TITLE.getString());
     }
 
     @Override
     public int getSlots() {
-        return MenuKeys.SUMMARY_MENU_SIZE.getInt();
+        return MenuKeys.PREVIEW_MENU_SIZE.getInt();
     }
 
     @Override
     public int getMenuTick() {
         return 0;
+    }
+
+    @NotNull
+    @Contract(pure = true)
+    private String formatChance(double chance) {
+        return String.format("%.2f", chance);
     }
 }

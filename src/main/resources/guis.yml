@@ -1,22 +1,47 @@
 summary-menu:
-  title: "&bLootbox Summary"
-  size: 54
+  title: '&8          ʟᴏᴏᴛʙᴏx ꜱᴜᴍᴍᴀʀʏ'
+  size: 36
 
   reward-template:
     material: PAPER
-    name: "&b{reward_name}"
+    name: '{reward_name} &8[x{reward_amount}]'
     lore:
-      - "&7Amount: &f{reward_amount}"
-      - ""
-      - "&8Lootbox: &7{lootbox}"
-      - "&8Granted via: &7{grant_type}"
+      - '{reward_lore}'
+      - ''
+      - '&7Lootbox: {lootbox}'
+      - '&8- Get a Lootbox from /store'
 
   items:
     close:
       material: BARRIER
-      slot: [49]
-      name: "&cClose"
-      lore:
-        - "&7Click to close the menu"
+      slot: [31]
+      name: '&cClose the Menu'
+    decoration:
+      material: GRAY_STAINED_GLASS_PANE
+      slot: [27,28,29,30,32,33,34,35]
+      name: '&f'
+
+preview-menu:
+  title: '&8        ʟᴏᴏᴛʙᴏx ᴘʀᴇᴠɪᴇᴡ'
+  size: 36
+
+  reward-template:
+    name: '{reward_name} &8[x{reward_amount}]'
+    lore:
+      - '{reward_lore}'
+      - ''
+      - '&7Chance: &f{chance}%'
+      - '&7Lootbox: {lootbox}'
+      - '&8- Preview only'
+
+  items:
+    close:
+      material: BARRIER
+      slot: [31]
+      name: '&cClose the Menu'
+    decoration:
+      material: GRAY_STAINED_GLASS_PANE
+      slot: [27,28,29,30,32,33,34,35]
+      name: '&f'
 
 version: '1'

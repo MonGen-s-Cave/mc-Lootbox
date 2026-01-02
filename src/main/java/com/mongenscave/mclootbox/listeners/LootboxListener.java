@@ -4,6 +4,8 @@ import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.animation.AnimationContext;
 import com.mongenscave.mclootbox.animation.AnimationController;
 import com.mongenscave.mclootbox.animation.impl.DefaultLootboxAnimation;
+import com.mongenscave.mclootbox.data.MenuController;
+import com.mongenscave.mclootbox.guis.impl.LootboxPreviewMenu;
 import com.mongenscave.mclootbox.hologram.LootboxHologram;
 import com.mongenscave.mclootbox.hologram.LootboxTextHologram;
 import com.mongenscave.mclootbox.identifiers.LootboxKeys;
@@ -22,6 +24,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,7 +38,6 @@ public final class LootboxListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(@NotNull PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) return;
-        if (!event.getAction().isRightClick()) return;
 
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
@@ -45,18 +47,22 @@ public final class LootboxListener implements Listener {
         String lootboxId = pdc.get(LootboxKeys.LOOTBOX_ID, PersistentDataType.STRING);
         if (lootboxId == null) return;
 
-        event.setCancelled(true);
-
-        if (!AnimationController.tryStart(player.getUniqueId())) return;
-
         Lootbox lootbox = plugin.getLootboxManager()
                 .getLootbox(lootboxId)
                 .orElse(null);
 
-        if (lootbox == null) {
-            AnimationController.end(player.getUniqueId());
+        if (lootbox == null) return;
+
+        if (event.getAction().isLeftClick()) {
+            event.setCancelled(true);
+
+            new LootboxPreviewMenu(MenuController.getMenuUtils(player), lootbox).open();
             return;
         }
+
+        if (!event.getAction().isRightClick()) return;
+
+        event.setCancelled(true);
 
         ItemStack display = item.clone();
         display.setAmount(1);
@@ -77,6 +83,8 @@ public final class LootboxListener implements Listener {
                 });
     }
 
+    @NotNull
+    @Contract("_ -> new")
     private RollResult rollRewards(@NotNull Lootbox lootbox) {
 
         List<LootboxReward> normal = new ArrayList<>();

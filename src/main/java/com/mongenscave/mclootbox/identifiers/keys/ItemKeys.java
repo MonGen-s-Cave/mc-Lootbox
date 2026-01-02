@@ -9,7 +9,10 @@ import java.util.List;
 
 public enum ItemKeys {
     SUMMARY_REWARD_TEMPLATE("summary-menu.reward-template"),
-    SUMMARY_CLOSE("summary-menu.items.close");
+    SUMMARY_CLOSE("summary-menu.items.close"),
+
+    PREVIEW_REWARD_TEMPLATE("preview-menu.reward-template"),
+    PREVIEW_CLOSE("preview-menu.items.close");
 
     private final String path;
 
