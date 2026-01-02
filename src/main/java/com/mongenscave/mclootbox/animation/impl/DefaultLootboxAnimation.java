@@ -2,28 +2,31 @@ package com.mongenscave.mclootbox.animation.impl;
 
 import com.github.Anon8281.universalScheduler.scheduling.tasks.MyScheduledTask;
 import com.mongenscave.mclootbox.McLootbox;
-import com.mongenscave.mclootbox.animation.AnimationContext;
-import com.mongenscave.mclootbox.animation.AnimationController;
-import com.mongenscave.mclootbox.animation.LootboxAnimation;
+import com.mongenscave.mclootbox.animation.*;
+import com.mongenscave.mclootbox.animation.utils.GlowUtil;
+import com.mongenscave.mclootbox.animation.utils.RewardItemUtil;
 import com.mongenscave.mclootbox.model.LootboxReward;
+import com.mongenscave.mclootbox.processor.MessageProcessor;
 import com.mongenscave.mclootbox.service.LootboxRewardService;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.*;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.*;
 
 public final class DefaultLootboxAnimation implements LootboxAnimation {
+    private final List<RewardItemUtil> labels = new ArrayList<>();
 
     private static final int INTRO_TICKS = 100;
     private static final int PREVIEW_SPAWN_DELAY = 8;
@@ -41,13 +44,19 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     private static final float PREVIEW_SCALE = 0.5f;
     private static final float WIN_SCALE = 0.7f;
 
-    private static final float FINAL_WIN_SCALE = 0.7f;
+    private static final int NORMAL_RISE_DURATION = 14;
+    private static final double NORMAL_RISE_Y = 0.18;
+    private static final int NORMAL_POST_REVEAL_DELAY = 40;
+    private static final float NORMAL_LABEL_BASE_SCALE = 0.45f;
+    private static final float NORMAL_LABEL_RISE_BOOST = 0.08f;
+
+    private static final float FINAL_WIN_SCALE = 0.65f;
     private static final int FINAL_RISE_DURATION = 20;
     private static final double FINAL_RISE_Y = 0.30;
 
     private static final int FINAL_SUSPENSE_CYCLES = 14;
     private static final int FINAL_SUSPENSE_STEP_TICKS = 6;
-    private static final float FINAL_SUSPENSE_SCALE = 0.85f;
+    private static final float FINAL_SUSPENSE_SCALE = 0.65f;
     private static final int FINAL_SUSPENSE_RESET_DELAY = 8;
 
     @Override
@@ -81,6 +90,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         context.hologram().spawn();
 
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
+            labels.forEach(RewardItemUtil::tick);
+
             try {
                 if (!context.player().isOnline()) {
                     cleanup(center, previews.values(), context);
@@ -121,6 +132,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                     preview.teleport(orbitLoc);
                     previews.put(reward, preview);
 
+                    attachLabel(preview, reward);
+
                     preview.getWorld().spawnParticle(
                             Particle.BUBBLE_POP,
                             orbitLoc,
@@ -129,6 +142,13 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                             0.12,
                             0.12,
                             0.02
+                    );
+
+                    preview.getWorld().playSound(
+                            orbitLoc,
+                            Sound.BLOCK_DECORATED_POT_INSERT,
+                            1.0f,
+                            1.0f
                     );
                 }
 
@@ -193,6 +213,16 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                                 new Vector3f(WIN_SCALE, WIN_SCALE, WIN_SCALE),
                                 new Quaternionf()
                         ));
+
+                        GlowUtil.applyGlow(display, NamedTextColor.GREEN);
+                        playNormalWinRise(display, openYaw);
+
+                        context.player().playSound(
+                                context.player().getLocation(),
+                                Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
+                                0.6f,
+                                1.2f
+                        );
                     }
 
                     LootboxRewardService.give(context.player(), reward);
@@ -206,8 +236,12 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
                 if (revealIndex[0] >= normalWon.size()) {
                     task[0].cancel();
-                    suckInNormalRewards(center, previews.values());
-                    startFinalPhase(context, center, finalPool, finalWon, openYaw);
+
+                    McLootbox.getScheduler().runTaskLater(() -> {
+                        suckInNormalRewards(center, previews.values());
+
+                        McLootbox.getScheduler().runTaskLater(() -> startFinalPhase(context, center, finalPool, finalWon, openYaw), SUCK_IN_DURATION + 2);
+                    }, NORMAL_POST_REVEAL_DELAY);
                     return;
                 }
 
@@ -247,6 +281,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
             d.setItemStack(previewItem(reward));
             d.setBillboard(Display.Billboard.FIXED);
 
+            attachLabel(d, reward);
+
             d.setTransformation(new Transformation(
                     new Vector3f(),
                     fixedRotation,
@@ -278,6 +314,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
             double t = tick[0] / (double) FINAL_SLIDE_DURATION;
             double ease = 1 - Math.pow(1 - t, 3);
+
+            labels.removeIf(label -> !label.tick());
 
             for (ItemDisplay d : displays) {
                 Location s = start.get(d);
@@ -326,6 +364,10 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
                 MyScheduledTask[] riseTask = new MyScheduledTask[1];
                 int[] tick = {0};
+
+                removeLabelFor(win);
+
+                GlowUtil.applyGlow(win, NamedTextColor.GOLD);
 
                 context.player().playSound(
                         context.player().getLocation(),
@@ -426,6 +468,52 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         }
     }
 
+    private void playNormalWinRise(@NotNull ItemDisplay display, float openYaw) {
+        Location start = display.getLocation();
+        Location end = start.clone().add(0, NORMAL_RISE_Y, 0);
+
+        MyScheduledTask[] task = new MyScheduledTask[1];
+        int[] tick = {0};
+
+        Quaternionf fixedRotation = yawRotation(openYaw);
+        RewardItemUtil label = getLabelFor(display);
+
+        task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
+            double t = tick[0] / (double) NORMAL_RISE_DURATION;
+            double ease = 1 - Math.pow(1 - t, 3);
+
+            display.teleport(new Location(
+                    start.getWorld(),
+                    lerp(start.getX(), end.getX(), ease),
+                    lerp(start.getY(), end.getY(), ease),
+                    lerp(start.getZ(), end.getZ(), ease)
+            ));
+
+            float itemScale = (float) (WIN_SCALE + 0.1 * ease);
+            display.setTransformation(new Transformation(
+                    new Vector3f(),
+                    fixedRotation,
+                    new Vector3f(itemScale, itemScale, itemScale),
+                    new Quaternionf()
+            ));
+
+            if (label != null && label.label.isValid()) {
+                float labelScale = NORMAL_LABEL_BASE_SCALE + NORMAL_LABEL_RISE_BOOST * (float) ease;
+
+                label.label.setTransformation(new Transformation(
+                        new Vector3f(),
+                        new Quaternionf(),
+                        new Vector3f(labelScale, labelScale, labelScale),
+                        new Quaternionf()
+                ));
+            }
+
+            if (++tick[0] >= NORMAL_RISE_DURATION) {
+                task[0].cancel();
+            }
+        }, 0L, 1L);
+    }
+
     private void suckInNormalRewards(@NotNull ItemDisplay center, @NotNull Collection<ItemDisplay> previews) {
         Location target = center.getLocation();
 
@@ -434,6 +522,17 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
         MyScheduledTask[] task = new MyScheduledTask[1];
         int[] tick = {0};
+
+        labels.removeIf(label -> {
+            ItemDisplay item = label.item;
+
+            if (previews.contains(item)) {
+                label.remove();
+                return true;
+            }
+
+            return false;
+        });
 
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
             double t = tick[0] / (double) SUCK_IN_DURATION;
@@ -474,6 +573,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
 
             int index = step[0] % displays.size();
+            labels.removeIf(label -> !label.tick());
 
             for (int i = 0; i < displays.size(); i++) {
                 ItemDisplay d = displays.get(i);
@@ -523,6 +623,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
             double t = tick[0] / (double) CENTER_SHRINK_DURATION;
             float scale = (float) (1 - (1 - Math.pow(1 - t, 3)));
 
+            labels.removeIf(label -> !label.tick());
+
             center.setTransformation(new Transformation(
                     new Vector3f(),
                     new Quaternionf(),
@@ -532,11 +634,60 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
             if (++tick[0] >= CENTER_SHRINK_DURATION) {
                 center.remove();
+
+                labels.forEach(RewardItemUtil::remove);
+                labels.clear();
+
                 context.hologram().remove();
+
                 AnimationController.end(context.player().getUniqueId());
                 task[0].cancel();
             }
         }, 0L, 1L);
+    }
+
+    private void attachLabel(@NotNull ItemDisplay item, @NotNull LootboxReward reward) {
+        String raw = reward.getName();
+        String name = raw != null && !raw.isEmpty() ? raw : reward.getMaterial();
+
+        TextDisplay label = item.getWorld().spawn(item.getLocation().clone().add(0, 0.35, 0), TextDisplay.class);
+
+        label.text(Component.text(MessageProcessor.process(name)));
+        label.setBillboard(Display.Billboard.VERTICAL);
+        label.setShadowed(true);
+        label.setViewRange(32.0f);
+        label.setDefaultBackground(false);
+        label.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+
+        label.setTransformation(new Transformation(
+                new Vector3f(),
+                new Quaternionf(),
+                new Vector3f(0.45f, 0.45f, 0.45f),
+                new Quaternionf()
+        ));
+
+        labels.add(new RewardItemUtil(item, label));
+    }
+
+    @Nullable
+    @Contract(pure = true)
+    private RewardItemUtil getLabelFor(ItemDisplay item) {
+        for (RewardItemUtil label : labels) {
+            if (label.item.equals(item)) {
+                return label;
+            }
+        }
+        return null;
+    }
+
+    private void removeLabelFor(ItemDisplay item) {
+        labels.removeIf(label -> {
+            if (label.item.equals(item)) {
+                label.remove();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void cleanup(ItemDisplay center, @NotNull Collection<ItemDisplay> previews, AnimationContext context) {
@@ -544,6 +695,9 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         if (center != null) center.remove();
 
         context.hologram().remove();
+        labels.forEach(RewardItemUtil::remove);
+        labels.clear();
+
         AnimationController.end(context.player().getUniqueId());
     }
 
