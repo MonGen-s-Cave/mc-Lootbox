@@ -8,6 +8,7 @@ import com.mongenscave.mclootbox.identifiers.LootboxKeys;
 import com.mongenscave.mclootbox.manager.LootboxRewardManager;
 import com.mongenscave.mclootbox.model.Lootbox;
 import com.mongenscave.mclootbox.model.LootboxReward;
+import com.mongenscave.mclootbox.model.RewardGroup;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,6 +21,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -59,15 +61,10 @@ public final class LootboxListener implements Listener {
         consumeOne(player, event.getHand());
 
         CompletableFuture
-                .supplyAsync(() ->
-                        LootboxRewardManager.roll(
-                                lootbox.getRewards().getRewards(),
-                                lootbox.getRewards().getPrizeSize()
-                        )
-                )
-                .thenAccept(rewards ->
+                .supplyAsync(() -> rollRewards(lootbox))
+                .thenAccept(result ->
                         McLootbox.getScheduler().runTask(() ->
-                                startAnimation(player, lootbox, display, rewards)
+                                startAnimation(player, lootbox, display, result)
                         )
                 )
                 .exceptionally(throwable -> {
@@ -77,8 +74,42 @@ public final class LootboxListener implements Listener {
                 });
     }
 
-    private void startAnimation(@NotNull Player player, Lootbox lootbox, ItemStack display, List<LootboxReward> rewards) {
-        if (!player.isOnline() || display.getType().isAir()) {
+    private RollResult rollRewards(@NotNull Lootbox lootbox) {
+
+        List<LootboxReward> normal = new ArrayList<>();
+        List<LootboxReward> fin = new ArrayList<>();
+
+        RewardGroup normalGroup = lootbox.getNormalRewards();
+        RewardGroup finalGroup = lootbox.getFinalRewards();
+
+        if (normalGroup != null && normalGroup.getPrizeSize() > 0) {
+            normal.addAll(
+                    LootboxRewardManager.roll(
+                            normalGroup.getRewards(),
+                            normalGroup.getPrizeSize()
+                    )
+            );
+        }
+
+        if (finalGroup != null && finalGroup.getPrizeSize() > 0) {
+            fin.addAll(
+                    LootboxRewardManager.roll(
+                            finalGroup.getRewards(),
+                            finalGroup.getPrizeSize()
+                    )
+            );
+        }
+
+        return new RollResult(normal, fin);
+    }
+
+    private void startAnimation(
+            @NotNull Player player,
+            @NotNull Lootbox lootbox,
+            @NotNull ItemStack display,
+            @NotNull RollResult result
+    ) {
+        if (!player.isOnline()) {
             AnimationController.end(player.getUniqueId());
             return;
         }
@@ -88,7 +119,8 @@ public final class LootboxListener implements Listener {
                 lootbox,
                 player.getLocation(),
                 display,
-                rewards
+                result.normal(),
+                result.finalRewards()
         );
 
         new DefaultLootboxAnimation().start(context);
@@ -96,6 +128,7 @@ public final class LootboxListener implements Listener {
 
     private void consumeOne(@NotNull Player player, EquipmentSlot hand) {
         ItemStack stack = player.getInventory().getItem(hand);
+        if (stack == null) return;
 
         int amount = stack.getAmount();
         if (amount <= 1) {
@@ -104,4 +137,9 @@ public final class LootboxListener implements Listener {
             stack.setAmount(amount - 1);
         }
     }
+
+    private record RollResult(
+            List<LootboxReward> normal,
+            List<LootboxReward> finalRewards
+    ) {}
 }

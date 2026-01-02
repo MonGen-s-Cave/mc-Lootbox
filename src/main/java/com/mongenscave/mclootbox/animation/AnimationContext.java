@@ -8,4 +8,4 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
-public record AnimationContext(Player player, Lootbox lootbox, Location origin, ItemStack displayItem, List<LootboxReward> rewards) {}
+public record AnimationContext(Player player, Lootbox lootbox, Location origin, ItemStack displayItem, List<LootboxReward> normalRewards, List<LootboxReward> finalRewards) {}
