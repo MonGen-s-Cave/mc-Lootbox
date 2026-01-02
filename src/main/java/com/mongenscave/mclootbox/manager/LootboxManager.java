@@ -99,11 +99,17 @@ public final class LootboxManager {
         if (section != null) {
             for (String key : section.getRoutesAsStrings(false)) {
                 Section r = section.getSection(key);
+                if (r == null) continue;
+
+                Section itemSection = r.getSection("item");
+                String itemPath = "lootboxes." + (config.getFile() != null ? config.getFile().getName().replace(".yml", "") : null) + "." + path + "." + key + ".item";
 
                 LootboxReward reward = new LootboxReward(
                         key,
                         r.getDouble("chance"),
                         r.getBoolean("item.give-item"),
+                        itemSection,
+                        itemPath,
                         r.getString("item.material"),
                         r.getString("item.name"),
                         r.getStringList("item.lore"),

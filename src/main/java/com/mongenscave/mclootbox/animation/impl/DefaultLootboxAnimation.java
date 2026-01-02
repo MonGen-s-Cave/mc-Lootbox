@@ -51,7 +51,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     private static final int FINAL_SUSPENSE_RESET_DELAY = 8;
 
     @Override
-    public void start(AnimationContext context) {
+    public void start(@NotNull AnimationContext context) {
         McLootbox.getScheduler().runTask(() -> run(context));
     }
 
@@ -77,6 +77,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         int[] spawnIndex = {0};
         int[] revealIndex = {0};
         boolean[] cutPlayed = {false};
+
+        context.hologram().spawn();
 
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
             try {
@@ -530,6 +532,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
             if (++tick[0] >= CENTER_SHRINK_DURATION) {
                 center.remove();
+                context.hologram().remove();
                 AnimationController.end(context.player().getUniqueId());
                 task[0].cancel();
             }
@@ -539,6 +542,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     private void cleanup(ItemDisplay center, @NotNull Collection<ItemDisplay> previews, AnimationContext context) {
         previews.forEach(ItemDisplay::remove);
         if (center != null) center.remove();
+
+        context.hologram().remove();
         AnimationController.end(context.player().getUniqueId());
     }
 

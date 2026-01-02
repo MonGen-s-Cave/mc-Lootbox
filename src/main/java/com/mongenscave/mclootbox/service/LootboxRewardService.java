@@ -3,10 +3,11 @@ package com.mongenscave.mclootbox.service;
 import com.mongenscave.mclootbox.item.ItemFactory;
 import com.mongenscave.mclootbox.model.LootboxReward;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 public final class LootboxRewardService {
 
@@ -21,19 +22,14 @@ public final class LootboxRewardService {
         }
     }
 
-    private static void giveItem(Player player, @NotNull LootboxReward reward) {
-        Material material;
-        try {
-            material = Material.valueOf(reward.getMaterial().toUpperCase());
-        } catch (IllegalArgumentException exception) {
-            return;
-        }
+    private static void giveItem(@NotNull Player player, @NotNull LootboxReward reward) {
+        if (reward.getItemSection() == null) return;
 
-        ItemStack item = ItemFactory.create(material, reward.getAmount())
-                .setName(reward.getName())
-                .setLore(reward.getLore())
-                .finish();
+        Optional<ItemStack> optional = ItemFactory.buildItem(
+                reward.getItemSection(),
+                reward.getItemPath()
+        );
 
-        player.getInventory().addItem(item);
+        optional.ifPresent(item -> player.getInventory().addItem(item));
     }
 }

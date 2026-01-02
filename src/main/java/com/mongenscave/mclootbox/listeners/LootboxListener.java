@@ -4,12 +4,15 @@ import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.animation.AnimationContext;
 import com.mongenscave.mclootbox.animation.AnimationController;
 import com.mongenscave.mclootbox.animation.impl.DefaultLootboxAnimation;
+import com.mongenscave.mclootbox.hologram.LootboxHologram;
+import com.mongenscave.mclootbox.hologram.LootboxTextHologram;
 import com.mongenscave.mclootbox.identifiers.LootboxKeys;
 import com.mongenscave.mclootbox.manager.LootboxRewardManager;
 import com.mongenscave.mclootbox.model.Lootbox;
 import com.mongenscave.mclootbox.model.LootboxReward;
 import com.mongenscave.mclootbox.model.RewardGroup;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -103,24 +106,25 @@ public final class LootboxListener implements Listener {
         return new RollResult(normal, fin);
     }
 
-    private void startAnimation(
-            @NotNull Player player,
-            @NotNull Lootbox lootbox,
-            @NotNull ItemStack display,
-            @NotNull RollResult result
-    ) {
+    private void startAnimation(@NotNull Player player, @NotNull Lootbox lootbox, @NotNull ItemStack display, @NotNull RollResult result) {
         if (!player.isOnline()) {
             AnimationController.end(player.getUniqueId());
             return;
         }
 
+        Location origin = player.getEyeLocation()
+                .add(player.getLocation().getDirection().normalize().multiply(2.8))
+                .add(0, -0.35, 0);
+
+        LootboxHologram hologram = new LootboxTextHologram(origin, player, lootbox);
+
         AnimationContext context = new AnimationContext(
                 player,
                 lootbox,
-                player.getLocation(),
                 display,
                 result.normal(),
-                result.finalRewards()
+                result.finalRewards(),
+                hologram
         );
 
         new DefaultLootboxAnimation().start(context);
@@ -128,7 +132,6 @@ public final class LootboxListener implements Listener {
 
     private void consumeOne(@NotNull Player player, EquipmentSlot hand) {
         ItemStack stack = player.getInventory().getItem(hand);
-        if (stack == null) return;
 
         int amount = stack.getAmount();
         if (amount <= 1) {

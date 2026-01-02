@@ -10,10 +10,16 @@ item:
 visual:
   animation: default
   hologram:
-    - "&b&lDEFAULT LOOTBOX"
-    - ""
-    - "&fOpened by {player}"
-    - "&7store.example.com"
+    background: TRANSPARENT
+    billboard: "VERTICAL"
+    text-shadow: true
+    scale: 1.0
+    y-offset: 1.2
+    lines:
+      - "&b&lDEFAULT LOOTBOX"
+      - ""
+      - "&fOpened by {player}"
+      - "&7store.example.com"
 
 reward-settings:
   prize-size:
