@@ -7,7 +7,9 @@ import com.mongenscave.mclootbox.animation.utils.GlowUtil;
 import com.mongenscave.mclootbox.animation.utils.RewardItemUtil;
 import com.mongenscave.mclootbox.model.LootboxReward;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
+import com.mongenscave.mclootbox.service.LootboxBroadcastService;
 import com.mongenscave.mclootbox.service.LootboxRewardService;
+import com.mongenscave.mclootbox.service.LootboxSummaryService;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -238,7 +240,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                     task[0].cancel();
 
                     McLootbox.getScheduler().runTaskLater(() -> {
-                        suckInNormalRewards(center, previews.values());
+                        suckInNormalRewards(center, previews.values(), openYaw);
 
                         McLootbox.getScheduler().runTaskLater(() -> startFinalPhase(context, center, finalPool, finalWon, openYaw), SUCK_IN_DURATION + 2);
                     }, NORMAL_POST_REVEAL_DELAY);
@@ -514,7 +516,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         }, 0L, 1L);
     }
 
-    private void suckInNormalRewards(@NotNull ItemDisplay center, @NotNull Collection<ItemDisplay> previews) {
+    private void suckInNormalRewards(@NotNull ItemDisplay center, @NotNull Collection<ItemDisplay> previews, float openYaw) {
         Location target = center.getLocation();
 
         Map<ItemDisplay, Location> start = new HashMap<>();
@@ -534,6 +536,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
             return false;
         });
 
+        Quaternionf fixedRotation = yawRotation(openYaw);
+
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
             double t = tick[0] / (double) SUCK_IN_DURATION;
             double ease = 1 - Math.pow(1 - t, 3);
@@ -551,7 +555,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                 float scale = (float) (PREVIEW_SCALE * (1 - ease));
                 d.setTransformation(new Transformation(
                         new Vector3f(),
-                        new Quaternionf(),
+                        fixedRotation,
                         new Vector3f(scale, scale, scale),
                         new Quaternionf()
                 ));
@@ -641,6 +645,25 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                 context.hologram().remove();
 
                 AnimationController.end(context.player().getUniqueId());
+
+                List<ItemStack> wonItems = new ArrayList<>();
+                context.normalRewards().forEach(r -> r.createDisplayItem().ifPresent(wonItems::add));
+                context.finalRewards().forEach(r -> r.createDisplayItem().ifPresent(wonItems::add));
+
+                String token = LootboxSummaryService.store(
+                        context.player(),
+                        context.lootbox().getDisplayName(),
+                        wonItems
+                );
+
+                LootboxBroadcastService.broadcast(
+                        context.player(),
+                        context.lootbox(),
+                        context.normalRewards(),
+                        context.finalRewards(),
+                        token
+                );
+
                 task[0].cancel();
             }
         }, 0L, 1L);

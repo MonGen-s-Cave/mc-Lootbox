@@ -1,9 +1,12 @@
 package com.mongenscave.mclootbox.model;
 
+import com.mongenscave.mclootbox.item.ItemFactory;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import lombok.Getter;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
+import java.util.Optional;
 
 @Getter
 public final class LootboxReward {
@@ -33,5 +36,15 @@ public final class LootboxReward {
         this.lore = lore;
         this.amount = amount;
         this.commands = commands;
+    }
+
+    public Optional<ItemStack> createDisplayItem() {
+        if (itemSection == null) return Optional.empty();
+        return ItemFactory.buildItem(itemSection, itemPath);
+    }
+
+    public Optional<ItemStack> createGivenItem() {
+        if (!giveItem || itemSection == null) return Optional.empty();
+        return ItemFactory.buildItem(itemSection, itemPath);
     }
 }

@@ -1,0 +1,22 @@
+summary-menu:
+  title: "&bLootbox Summary"
+  size: 54
+
+  reward-template:
+    material: PAPER
+    name: "&b{reward_name}"
+    lore:
+      - "&7Amount: &f{reward_amount}"
+      - ""
+      - "&8Lootbox: &7{lootbox}"
+      - "&8Granted via: &7{grant_type}"
+
+  items:
+    close:
+      material: BARRIER
+      slot: [49]
+      name: "&cClose"
+      lore:
+        - "&7Click to close the menu"
+
+version: '1'

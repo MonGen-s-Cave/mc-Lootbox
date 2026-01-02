@@ -17,7 +17,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LootboxManager {
-
     private final Map<String, Lootbox> lootboxes = new ConcurrentHashMap<>();
     private final File folder;
 
@@ -126,6 +125,11 @@ public final class LootboxManager {
     @NotNull
     public Optional<Lootbox> getLootbox(@NotNull String id) {
         return Optional.ofNullable(lootboxes.get(id.toLowerCase()));
+    }
+
+    @NotNull
+    public Set<String> getLootboxIds() {
+        return lootboxes.keySet();
     }
 
     public Optional<ItemStack> createLootboxItem(@NotNull Lootbox lootbox, int amount) {

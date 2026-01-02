@@ -15,10 +15,14 @@ public final class LootboxRewardService {
     }
 
     public static void give(Player player, @NotNull LootboxReward reward) {
-        if (reward.isGiveItem()) giveItem(player, reward);
+        reward.createGivenItem()
+                .ifPresent(item -> player.getInventory().addItem(item));
 
         for (String command : reward.getCommands()) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", player.getName()));
+            Bukkit.dispatchCommand(
+                    Bukkit.getConsoleSender(),
+                    command.replace("{player}", player.getName())
+            );
         }
     }
 

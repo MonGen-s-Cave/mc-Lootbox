@@ -1,15 +1,20 @@
 package com.mongenscave.mclootbox.commands;
 
 import com.mongenscave.mclootbox.McLootbox;
+import com.mongenscave.mclootbox.annotions.Lootboxes;
+import com.mongenscave.mclootbox.data.MenuController;
+import com.mongenscave.mclootbox.guis.impl.LootboxSummaryMenu;
 import com.mongenscave.mclootbox.identifiers.keys.MessageKeys;
 import com.mongenscave.mclootbox.model.Lootbox;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
+import com.mongenscave.mclootbox.service.LootboxSummaryService;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import revxrsal.commands.annotation.Command;
+import revxrsal.commands.annotation.Default;
 import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 
@@ -32,7 +37,7 @@ public class CommandLootbox {
 
     @Subcommand("give")
     @CommandPermission("mclootbox.give")
-    public void give(@NotNull CommandSender sender, @NotNull OfflinePlayer player, @NotNull String lootboxId, int amount) {
+    public void give(@NotNull CommandSender sender, @NotNull OfflinePlayer player, @Lootboxes @NotNull String lootboxId, @Default("1") int amount) {
         final int finalAmount = amount <= 0 ? 1 : amount;
 
         Player target = Bukkit.getPlayer(player.getUniqueId());
@@ -70,5 +75,16 @@ public class CommandLootbox {
                                             .replace("{amount}", String.valueOf(finalAmount)));
                         },
                         () -> sender.sendMessage(MessageKeys.LOOTBOX_ITEM_ERROR.getMessage()));
+    }
+
+    @Subcommand("summary")
+    public void summary(Player player, String token) {
+        LootboxSummaryService.get(token)
+                .ifPresentOrElse(
+                        entry -> new LootboxSummaryMenu(
+                                MenuController.getMenuUtils(player),
+                                entry
+                        ).open(), () -> player.sendMessage("§cThis summary is no longer available.")
+                );
     }
 }

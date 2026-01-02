@@ -6,18 +6,23 @@ import com.mongenscave.mclootbox.data.ItemData;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -96,6 +101,8 @@ public interface ItemFactory {
             if (unbreakable) item.editMeta(meta -> meta.setUnbreakable(true));
 
             item.editMeta(meta -> {
+                applyColorIfPresent(section, meta);
+
                 PersistentDataContainer pdc = meta.getPersistentDataContainer();
                 NamespacedKey key = new NamespacedKey(McLootbox.getInstance(), "McLootbox");
                 pdc.set(key, PersistentDataType.STRING, configPath);
@@ -440,5 +447,44 @@ public interface ItemFactory {
         for (int slot : itemData.slots()) {
             if (slot >= 0 && slot < inventory.getSize()) inventory.setItem(slot, itemData.item().clone());
         }
+    }
+
+    private static void applyColorIfPresent(@NotNull Section section, @NotNull ItemMeta meta) {
+        if (!section.contains("color")) return;
+
+        Color color = parseColor(section.get("color"));
+        if (color == null) return;
+
+        if (meta instanceof LeatherArmorMeta leather) {
+            leather.setColor(color);
+        }
+
+        if (meta instanceof PotionMeta potion) {
+            potion.setColor(color);
+        }
+    }
+
+    @Nullable
+    private static Color parseColor(@NotNull Object raw) {
+        if (raw instanceof String s && s.startsWith("#") && s.length() == 7) {
+            try {
+                int r = Integer.parseInt(s.substring(1, 3), 16);
+                int g = Integer.parseInt(s.substring(3, 5), 16);
+                int b = Integer.parseInt(s.substring(5, 7), 16);
+                return Color.fromRGB(r, g, b);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        if (raw instanceof Section sec) {
+            int r = sec.getInt("r", -1);
+            int g = sec.getInt("g", -1);
+            int b = sec.getInt("b", -1);
+
+            if (r >= 0 && g >= 0 && b >= 0) {
+                return Color.fromRGB(r, g, b);
+            }
+        }
+
+        return null;
     }
 }

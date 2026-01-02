@@ -21,6 +21,24 @@ visual:
       - "&fOpened by {player}"
       - "&7store.example.com"
 
+final-broadcast:
+  - ""
+  - "&f{player} opened a {lootbox}"
+  - "&7{summary}"
+  - ""
+  - "&bNormal Rewards:"
+  - "{normal-reward} &8› &3{reward_amount}x &b{reward_name}"
+  - ""
+  - "&c&lFINAL &cRewards:"
+  - "{final-reward} &6› &e{reward_amount}x &f{reward_name}"
+  - ""
+
+summary:
+  enabled: true
+  text: "&b[Click here to Summary]"
+  hover: "&7Click to view your rewards"
+  command: "/lootbox summary"
+
 reward-settings:
   prize-size:
     normal: 8
