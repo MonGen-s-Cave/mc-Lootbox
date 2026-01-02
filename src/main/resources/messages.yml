@@ -1,7 +1,17 @@
 prefix: "&#BEE048[Lootbox]"
 
 messages:
+  no-permission: "{prefix} &cYou don't have permission to do that."
+  player-required: "{prefix} &cThis command can only be used by players."
+  player-not-found: "{prefix} &cPlayer not found."
+
+  lootbox:
+    not-found: "{prefix} &cLootbox not found."
+    item-error: "{prefix} &cFailed to create the lootbox item."
+    given: "{prefix} &aYou gave &f{amount}x {lootbox} &ato &f{player}&a."
+    received: "{prefix} &aYou received &f{amount}x {lootbox}&a."
+
   admin:
-    reload: "{prefix} &aPlugin files has been reloaded successfully."
+    reload: "{prefix} &aConfiguration reloaded successfully."
 
 version: '1'

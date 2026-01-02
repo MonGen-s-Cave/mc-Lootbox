@@ -3,6 +3,7 @@ package com.mongenscave.mclootbox;
 import com.github.Anon8281.universalScheduler.UniversalScheduler;
 import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 import com.mongenscave.mclootbox.config.Config;
+import com.mongenscave.mclootbox.manager.LootboxManager;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
 import com.mongenscave.mclootbox.utils.RegisterUtil;
 import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
@@ -22,6 +23,8 @@ public final class McLootbox extends ZapperJavaPlugin {
     @Getter private static McLootbox instance;
     @Getter private static TaskScheduler scheduler;
 
+    @Getter private LootboxManager lootboxManager;
+
     @Getter private Config language;
     @Getter private Config guis;
     Config config;
@@ -36,7 +39,11 @@ public final class McLootbox extends ZapperJavaPlugin {
     public void onEnable() {
         initializeComponents();
 
+        lootboxManager = new LootboxManager();
+
+        RegisterUtil.registerListeners();
         RegisterUtil.registerCommands();
+
         LoggerUtils.printStartup();
     }
 

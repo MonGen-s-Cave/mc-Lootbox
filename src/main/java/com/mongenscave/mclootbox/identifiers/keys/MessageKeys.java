@@ -14,7 +14,12 @@ public enum MessageKeys {
     PLAYER_REQUIRED("messages.player-required"),
     PLAYER_NOT_FOUND("messages.player-not-found"),
 
-    COMMAND_ADMIN_RELOAD("messages.admin.reload");
+    LOOTBOX_NOT_FOUND("messages.lootbox.not-found"),
+    LOOTBOX_ITEM_ERROR("messages.lootbox.item-error"),
+    LOOTBOX_GIVEN("messages.lootbox.given"),
+    LOOTBOX_RECEIVED("messages.lootbox.received"),
+
+    COMMAND_RELOAD("messages.admin.reload");
 
     private static final Config language = McLootbox.getInstance().getLanguage();
     private final String path;
