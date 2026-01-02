@@ -1,11 +1,14 @@
 package com.mongenscave.mclootbox.listeners;
 
 import com.mongenscave.mclootbox.McLootbox;
+import com.mongenscave.mclootbox.animation.AnimationContext;
+import com.mongenscave.mclootbox.animation.AnimationController;
+import com.mongenscave.mclootbox.animation.impl.DefaultLootboxAnimation;
 import com.mongenscave.mclootbox.identifiers.LootboxKeys;
 import com.mongenscave.mclootbox.manager.LootboxRewardManager;
 import com.mongenscave.mclootbox.model.Lootbox;
 import com.mongenscave.mclootbox.model.LootboxReward;
-import com.mongenscave.mclootbox.service.LootboxRewardService;
+import com.mongenscave.mclootbox.utils.LoggerUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,6 +21,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public final class LootboxListener implements Listener {
 
@@ -38,19 +42,56 @@ public final class LootboxListener implements Listener {
 
         event.setCancelled(true);
 
+        if (!AnimationController.tryStart(player.getUniqueId())) return;
+
         Lootbox lootbox = plugin.getLootboxManager()
                 .getLootbox(lootboxId)
                 .orElse(null);
 
-        if (lootbox == null) return;
+        if (lootbox == null) {
+            AnimationController.end(player.getUniqueId());
+            return;
+        }
+
+        ItemStack display = item.clone();
+        display.setAmount(1);
 
         consumeOne(player, event.getHand());
 
-        List<LootboxReward> rewards = LootboxRewardManager.roll(lootbox.getRewards().getRewards(), lootbox.getRewards().getPrizeSize());
+        CompletableFuture
+                .supplyAsync(() ->
+                        LootboxRewardManager.roll(
+                                lootbox.getRewards().getRewards(),
+                                lootbox.getRewards().getPrizeSize()
+                        )
+                )
+                .thenAccept(rewards ->
+                        McLootbox.getScheduler().runTask(() ->
+                                startAnimation(player, lootbox, display, rewards)
+                        )
+                )
+                .exceptionally(throwable -> {
+                    AnimationController.end(player.getUniqueId());
+                    LoggerUtils.error(throwable.getMessage());
+                    return null;
+                });
+    }
 
-        for (LootboxReward reward : rewards) {
-            LootboxRewardService.give(player, reward);
+    private void startAnimation(@NotNull Player player, Lootbox lootbox, ItemStack display, List<LootboxReward> rewards) {
+        if (!player.isOnline() || display.getType().isAir()) {
+            AnimationController.end(player.getUniqueId());
+            return;
         }
+
+        AnimationContext context = new AnimationContext(
+                player,
+                lootbox,
+                player.getLocation(),
+                display,
+                rewards
+        );
+
+        new DefaultLootboxAnimation().start(context);
     }
 
     private void consumeOne(@NotNull Player player, EquipmentSlot hand) {
