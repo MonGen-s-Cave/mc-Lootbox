@@ -12,7 +12,21 @@ public enum ItemKeys {
     SUMMARY_CLOSE("summary-menu.items.close"),
 
     PREVIEW_REWARD_TEMPLATE("preview-menu.reward-template"),
-    PREVIEW_CLOSE("preview-menu.items.close");
+    PREVIEW_CLOSE("preview-menu.items.close"),
+
+    EDITOR_MAIN_LOOTBOX_TEMPLATE("editor-main.lootbox-template"),
+    EDITOR_MAIN_CLOSE("editor-main.items.close"),
+    EDITOR_MAIN_CREATE("editor-main.items.create"),
+    EDITOR_MAIN_RELOAD("editor-main.items.reload"),
+    EDITOR_MAIN_NEXT("editor-main.items.next"),
+    EDITOR_MAIN_PREV("editor-main.items.prev"),
+
+    EDITOR_LOOTBOX_BACK("editor-lootbox.items.back"),
+    EDITOR_LOOTBOX_PREVIEW("editor-lootbox.items.preview"),
+    EDITOR_LOOTBOX_ITEM("editor-lootbox.items.item"),
+    EDITOR_LOOTBOX_VISUAL("editor-lootbox.items.visual"),
+    EDITOR_LOOTBOX_NORMAL_REWARDS("editor-lootbox.items.normal-rewards"),
+    EDITOR_LOOTBOX_FINAL_REWARDS("editor-lootbox.items.final-rewards");
 
     private final String path;
 

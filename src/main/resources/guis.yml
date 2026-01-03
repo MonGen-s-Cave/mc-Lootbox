@@ -26,6 +26,7 @@ preview-menu:
   size: 36
 
   reward-template:
+    material: PAPER
     name: '{reward_name} &8[x{reward_amount}]'
     lore:
       - '{reward_lore}'
@@ -43,5 +44,146 @@ preview-menu:
       material: GRAY_STAINED_GLASS_PANE
       slot: [27,28,29,30,32,33,34,35]
       name: '&f'
+
+editor-main:
+  title: '&8          ʟᴏᴏᴛʙᴏx ᴇᴅɪᴛᴏʀ'
+  size: 36
+
+  lootbox-slots: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]
+
+  lootbox-template:
+    material: "CHEST"
+    name: "&#B8FFF2{display_name} &#7A8592• &#D3DBE3{id}"
+    lore:
+      - ""
+      - " &#8FA3B8◆ &#C7D0D9Normal Rewards: &#B8FFF2{normal_rewards}"
+      - " &#8FA3B8◆ &#C7D0D9Final Rewards: &#B8FFF2{final_rewards}"
+      - ""
+      - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFSelect Lootbox"
+      - "&#8A8F98» &#C7D0D9Right click: &#FFFFFFPreview"
+
+  items:
+    close:
+      material: "BARRIER"
+      slot: [35]
+      name: "&#FF5D5D&l✕ &#FF8A8AClose"
+      lore:
+        - "&#AEB6C0Close the editor."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFClose"
+
+    create:
+      material: "SCAFFOLDING"
+      slot: [31]
+      name: "&#6DFF9E&l+ &#B8FFD0Create lootbox"
+      lore:
+        - "&#C7D0D9Create a new lootbox file."
+        - "&#C7D0D9You will type the id in chat."
+        - ""
+        - "&#8A8F98Allowed: &#FFFFFF[a-z0-9_-] &#8A8F98(3-32)"
+        - "&#8A8F98Type &#FFFFFFcancel &#8A8F98to abort."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFCreate"
+
+    reload:
+      material: "CLOCK"
+      slot: [27]
+      name: "&#7CF6FF&l🌊 &#B8FFF2Reload lootboxes"
+      lore:
+        - "&#C7D0D9Refresh lootbox files from disk."
+        - "&#8A8F98Keeps the editor list updated."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFReload"
+
+    prev:
+      material: "ARROW"
+      slot: [30]
+      name: "&#8FA3B8&l← &#D7E0EAPrevious"
+      lore:
+        - "&#AEB6C0Go to the previous page."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFPrevious page"
+
+    next:
+      material: "ARROW"
+      slot: [32]
+      name: "&#8FA3B8&l→ &#D7E0EANext"
+      lore:
+        - "&#AEB6C0Go to the next page."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFNext page"
+
+    filler:
+      material: "GRAY_STAINED_GLASS_PANE"
+      slot: [28,29,33,34]
+      name: "&f"
+      lore: []
+
+editor-lootbox:
+  title: '&8Lootbox: {id}'
+  size: 36
+
+  items:
+    filler:
+      material: "GRAY_STAINED_GLASS_PANE"
+      slot: [27,28,29,30,32,33,34,35]
+      name: "&f"
+      lore: []
+
+    back:
+      material: "IRON_DOOR"
+      slot: [31]
+      name: "&#8FA3B8&l← &#D7E0EABack"
+      lore:
+        - "&#AEB6C0Return to the lootbox list."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFBack"
+
+    preview:
+      material: "SPYGLASS"
+      slot: [11]
+      name: "&#7CF6FF&l» &#B8FFF2Preview"
+      lore:
+        - "&#C7D0D9Open the preview menu."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFOpen"
+
+    item:
+      material: "NAME_TAG"
+      slot: [12]
+      name: "&#B8FFF2&l» &#D3DBE3Lootbox Item"
+      lore:
+        - "&#C7D0D9Edit material, name and lore."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFEdit"
+
+    visual:
+      material: "ARMOR_STAND"
+      slot: [13]
+      name: "&#8FA3B8&l» &#D7E0EAVisual"
+      lore:
+        - "&#C7D0D9Edit animation and hologram."
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFEdit"
+
+    normal-rewards:
+      material: "CHEST"
+      slot: [14]
+      name: "&#B8FFF2&l» &#D3DBE3Normal Rewards"
+      lore:
+        - ""
+        - " &#8FA3B8◆ &#C7D0D9Edit normal reward pool"
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFOpen"
+
+    final-rewards:
+      material: "ENDER_CHEST"
+      slot: [15]
+      name: "&#8FA3B8&l» &#D7E0EAFinal Rewards"
+      lore:
+        - ""
+        - " &#8FA3B8◆ &#C7D0D9Edit final reward pool"
+        - ""
+        - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFOpen"
 
 version: '1'

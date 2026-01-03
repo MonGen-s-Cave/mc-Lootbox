@@ -13,7 +13,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LootboxManager {
@@ -38,9 +41,9 @@ public final class LootboxManager {
         if (firstInit) {
             try {
                 File target = new File(folder, "default.yml");
-                if (target.exists()) return;
-
-                McLootbox.getInstance().saveResource("lootboxes/default.yml", false);
+                if (!target.exists()) {
+                    McLootbox.getInstance().saveResource("lootboxes/default.yml", false);
+                }
             } catch (Exception exception) {
                 LoggerUtils.error("Failed to create initial default lootbox: " + exception.getMessage());
             }
@@ -52,15 +55,80 @@ public final class LootboxManager {
         for (File file : files) {
             try {
                 YamlDocument config = YamlDocument.create(file);
-                String id = file.getName().replace(".yml", "").toLowerCase();
+                String id = file.getName().replace(".yml", "").toLowerCase(Locale.ROOT);
 
                 Lootbox lootbox = parseLootbox(id, config);
                 lootboxes.put(id, lootbox);
-
             } catch (Exception exception) {
                 LoggerUtils.error(exception.getMessage());
             }
         }
+    }
+
+    @NotNull
+    public CompletableFuture<Void> reload() {
+        return CompletableFuture.runAsync(() -> {
+            Map<String, Lootbox> built = new HashMap<>();
+
+            boolean firstInit = false;
+
+            if (!folder.exists()) {
+                folder.mkdirs();
+                firstInit = true;
+            }
+
+            if (firstInit) {
+                try {
+                    File target = new File(folder, "default.yml");
+                    if (!target.exists()) {
+                        McLootbox.getInstance().saveResource("lootboxes/default.yml", false);
+                    }
+                } catch (Exception exception) {
+                    LoggerUtils.error("Failed to create initial default lootbox: " + exception.getMessage());
+                }
+            }
+
+            File[] files = folder.listFiles((d, n) -> n.endsWith(".yml"));
+            if (files == null) return;
+
+            for (File file : files) {
+                try {
+                    YamlDocument config = YamlDocument.create(file);
+                    String id = file.getName().replace(".yml", "").toLowerCase(Locale.ROOT);
+
+                    Lootbox lootbox = parseLootbox(id, config);
+                    built.put(id, lootbox);
+                } catch (Exception exception) {
+                    LoggerUtils.error(exception.getMessage());
+                }
+            }
+
+            lootboxes.clear();
+            lootboxes.putAll(built);
+        }, McLootbox.getInstance().getIoExecutor());
+    }
+
+    @NotNull
+    public CompletableFuture<Boolean> createLootboxFile(@NotNull String id) {
+        final String normalized = id.toLowerCase(Locale.ROOT);
+
+        return CompletableFuture.supplyAsync(() -> {
+            if (!normalized.matches("^[a-z0-9_-]{3,32}$")) return false;
+            if (!folder.exists()) folder.mkdirs();
+
+            File target = new File(folder, normalized + ".yml");
+            if (target.exists()) return false;
+
+            String content = defaultLootboxYaml();
+
+            try {
+                Files.writeString(target.toPath(), content, StandardCharsets.UTF_8);
+                return true;
+            } catch (Exception exception) {
+                LoggerUtils.error("Failed to create lootbox file: " + exception.getMessage());
+                return false;
+            }
+        }, McLootbox.getInstance().getIoExecutor());
     }
 
     @NotNull
@@ -70,21 +138,25 @@ public final class LootboxManager {
         LootboxItem item = new LootboxItem(
                 config.getString("item.material"),
                 config.getString("item.name"),
-                config.getStringList("item.lore"));
+                config.getStringList("item.lore")
+        );
 
         LootboxVisual visual = new LootboxVisual(
                 config.getString("visual.animation"),
-                config.getStringList("visual.hologram"));
+                config.getStringList("visual.hologram")
+        );
 
         RewardGroup normal = parseRewardGroup(
                 config,
                 "reward-settings.normal-rewards",
-                config.getInt("reward-settings.prize-size.normal"));
+                config.getInt("reward-settings.prize-size.normal")
+        );
 
         RewardGroup fin = parseRewardGroup(
                 config,
                 "reward-settings.final-rewards",
-                config.getInt("reward-settings.prize-size.final"));
+                config.getInt("reward-settings.prize-size.final")
+        );
 
         return new Lootbox(id, config, displayName, item, visual, normal, fin);
     }
@@ -97,23 +169,29 @@ public final class LootboxManager {
 
         if (section != null) {
             for (String key : section.getRoutesAsStrings(false)) {
-                Section r = section.getSection(key);
-                if (r == null) continue;
+                Section rewardSection = section.getSection(key);
+                if (rewardSection == null) continue;
 
-                Section itemSection = r.getSection("item");
-                String itemPath = "lootboxes." + (config.getFile() != null ? config.getFile().getName().replace(".yml", "") : null) + "." + path + "." + key + ".item";
+                Section itemSection = rewardSection.getSection("item");
+
+                String fileName = config.getFile() != null
+                        ? config.getFile().getName().replace(".yml", "")
+                        : "unknown";
+
+                String itemPath = "lootboxes." + fileName + "." + path + "." + key + ".item";
 
                 LootboxReward reward = new LootboxReward(
                         key,
-                        r.getDouble("chance"),
-                        r.getBoolean("item.give-item"),
+                        rewardSection.getDouble("chance"),
+                        rewardSection.getBoolean("item.give-item"),
                         itemSection,
                         itemPath,
-                        r.getString("item.material"),
-                        r.getString("item.name"),
-                        r.getStringList("item.lore"),
-                        r.getInt("item.amount", 1),
-                        r.getStringList("commands"));
+                        rewardSection.getString("item.material"),
+                        rewardSection.getString("item.name"),
+                        rewardSection.getStringList("item.lore"),
+                        rewardSection.getInt("item.amount", 1),
+                        rewardSection.getStringList("commands")
+                );
 
                 rewards.put(key, reward);
             }
@@ -124,7 +202,7 @@ public final class LootboxManager {
 
     @NotNull
     public Optional<Lootbox> getLootbox(@NotNull String id) {
-        return Optional.ofNullable(lootboxes.get(id.toLowerCase()));
+        return Optional.ofNullable(lootboxes.get(id.toLowerCase(Locale.ROOT)));
     }
 
     @NotNull
@@ -145,5 +223,29 @@ public final class LootboxManager {
         stack.editMeta(meta -> meta.getPersistentDataContainer().set(LootboxKeys.LOOTBOX_ID, PersistentDataType.STRING, lootbox.getId()));
 
         return Optional.of(stack);
+    }
+
+    @NotNull
+    private static String defaultLootboxYaml() {
+        return """
+                display-name: "&aNew Lootbox"
+                
+                item:
+                  material: "CHEST"
+                  name: "&aNew Lootbox"
+                  lore:
+                    - "&7Created via in-game editor."
+                
+                visual:
+                  animation: "default"
+                  hologram: []
+                
+                reward-settings:
+                  prize-size:
+                    normal: 5
+                    final: 3
+                  normal-rewards: {}
+                  final-rewards: {}
+                """;
     }
 }

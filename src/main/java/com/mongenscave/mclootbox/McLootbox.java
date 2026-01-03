@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import revxrsal.zapper.ZapperJavaPlugin;
 
 import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class McLootbox extends ZapperJavaPlugin {
 
@@ -30,6 +32,8 @@ public final class McLootbox extends ZapperJavaPlugin {
     @Getter private Config guis;
     Config config;
 
+    @Getter private ExecutorService ioExecutor;
+
     @Override
     public void onLoad() {
         instance = this;
@@ -38,6 +42,13 @@ public final class McLootbox extends ZapperJavaPlugin {
 
     @Override
     public void onEnable() {
+        ioExecutor = Executors.newSingleThreadExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "McLootbox IO");
+            thread.setDaemon(true);
+
+            return thread;
+        });
+
         initializeComponents();
 
         lootboxManager = new LootboxManager();
@@ -52,6 +63,7 @@ public final class McLootbox extends ZapperJavaPlugin {
 
     @Override
     public void onDisable() {
+        if (ioExecutor != null) ioExecutor.shutdownNow();
     }
 
     public Config getConfiguration() {

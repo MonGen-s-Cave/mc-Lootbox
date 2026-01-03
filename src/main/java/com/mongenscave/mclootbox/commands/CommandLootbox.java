@@ -4,6 +4,7 @@ import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.annotions.Lootboxes;
 import com.mongenscave.mclootbox.data.MenuController;
 import com.mongenscave.mclootbox.guis.impl.LootboxSummaryMenu;
+import com.mongenscave.mclootbox.guis.impl.editor.LootboxEditorMainMenu;
 import com.mongenscave.mclootbox.identifiers.keys.MessageKeys;
 import com.mongenscave.mclootbox.model.Lootbox;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
@@ -86,5 +87,11 @@ public class CommandLootbox {
                                 entry
                         ).open(), () -> player.sendMessage("§cThis summary is no longer available.")
                 );
+    }
+
+    @Subcommand("editor")
+    @CommandPermission("mclootbox.editor")
+    public void openEditor(Player player) {
+        LootboxEditorMainMenu.open(player);
     }
 }

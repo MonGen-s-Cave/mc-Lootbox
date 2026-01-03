@@ -12,7 +12,13 @@ public enum MenuKeys {
     SUMMARY_MENU_SIZE("summary-menu.size"),
 
     PREVIEW_MENU_TITLE("preview-menu.title"),
-    PREVIEW_MENU_SIZE("preview-menu.size");
+    PREVIEW_MENU_SIZE("preview-menu.size"),
+
+    EDITOR_MAIN_MENU_TITLE("editor-main.title"),
+    EDITOR_MAIN_MENU_SIZE("editor-main.size"),
+
+    EDITOR_LOOTBOX_MENU_TITLE("editor-lootbox.title"),
+    EDITOR_LOOTBOX_MENU_SIZE("editor-lootbox.size");
 
     private static final Config config = McLootbox.getInstance().getGuis();
     private final String path;
@@ -33,6 +39,10 @@ public enum MenuKeys {
 
     public int getInt() {
         return config.getInt(path);
+    }
+
+    public List<Integer> getIntList() {
+        return config.getIntList(path);
     }
 
     public List<String> getList() {
