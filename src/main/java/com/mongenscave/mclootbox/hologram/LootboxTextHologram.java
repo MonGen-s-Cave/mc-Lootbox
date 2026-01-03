@@ -4,6 +4,7 @@ import com.mongenscave.mclootbox.model.Lootbox;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
@@ -17,8 +18,24 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class LootboxTextHologram implements LootboxHologram {
+
+    private static final Pattern HEX = Pattern.compile("&#([A-Fa-f0-9]{6})");
+
+    private static final LegacyComponentSerializer LEGACY_AMP = LegacyComponentSerializer.builder()
+            .character('&')
+            .hexColors()
+            .useUnusualXRepeatedCharacterHexFormat()
+            .build();
+
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.builder()
+            .character('§')
+            .hexColors()
+            .useUnusualXRepeatedCharacterHexFormat()
+            .build();
 
     private final List<TextDisplay> displays = new ArrayList<>();
 
@@ -43,23 +60,29 @@ public final class LootboxTextHologram implements LootboxHologram {
         String backgroundRaw = hologram.getString("background", "TRANSPARENT");
 
         Display.Billboard billboard = Display.Billboard.valueOf(
-                hologram.getString("billboard", "VERTICAL").toUpperCase());
+                hologram.getString("billboard", "VERTICAL").toUpperCase()
+        );
 
         List<String> lines = hologram.getStringList("lines");
 
         Location loc = base.clone().add(0, yOffset, 0);
 
-        for (int i = 0; i < lines.size(); i++) {
-            String raw = lines.get(i);
+        for (int index = 0; index < lines.size(); index++) {
+            String raw = lines.get(index);
 
-            Location lineLoc = loc.clone().add(0, -0.25 * i, 0);
+            Location lineLoc = loc.clone().add(0, -0.25 * index, 0);
 
             TextDisplay display = lineLoc.getWorld().spawn(lineLoc, TextDisplay.class);
 
-            display.text(Component.text(MessageProcessor.process(
-                    raw.replace("{player}", player.getName())
-                            .replace("{lootbox}", lootbox.getDisplayName()))));
+            String text = raw.replace("{player}", player.getName())
+                    .replace("{lootbox}", lootbox.getDisplayName());
 
+            text = translateHex(text);
+            text = MessageProcessor.process(text);
+
+            display.text(deserializeLegacy(text));
+
+            display.setAlignment(TextDisplay.TextAlignment.CENTER);
             display.setBillboard(billboard);
             display.setShadowed(shadow);
             display.setViewRange(64.0f);
@@ -108,5 +131,37 @@ public final class LootboxTextHologram implements LootboxHologram {
         }
 
         return null;
+    }
+
+    private static @NotNull Component deserializeLegacy(@NotNull String input) {
+        if (input.indexOf('§') >= 0) {
+            return LEGACY_SECTION.deserialize(input);
+        }
+
+        return LEGACY_AMP.deserialize(input);
+    }
+
+    private static @NotNull String translateHex(@NotNull String input) {
+        char code = input.indexOf('§') >= 0 ? '§' : '&';
+
+        Matcher matcher = HEX.matcher(input);
+        StringBuffer buffer = new StringBuffer(input.length() + 32);
+
+        while (matcher.find()) {
+            String hex = matcher.group(1);
+
+            StringBuilder replacement = new StringBuilder(14)
+                    .append(code)
+                    .append('x');
+
+            for (int i = 0; i < 6; i++) {
+                replacement.append(code).append(hex.charAt(i));
+            }
+
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement.toString()));
+        }
+
+        matcher.appendTail(buffer);
+        return buffer.toString();
     }
 }
