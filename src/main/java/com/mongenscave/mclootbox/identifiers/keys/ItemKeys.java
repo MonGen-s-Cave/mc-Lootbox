@@ -26,7 +26,18 @@ public enum ItemKeys {
     EDITOR_LOOTBOX_ITEM("editor-lootbox.items.item"),
     EDITOR_LOOTBOX_VISUAL("editor-lootbox.items.visual"),
     EDITOR_LOOTBOX_NORMAL_REWARDS("editor-lootbox.items.normal-rewards"),
-    EDITOR_LOOTBOX_FINAL_REWARDS("editor-lootbox.items.final-rewards");
+    EDITOR_LOOTBOX_FINAL_REWARDS("editor-lootbox.items.final-rewards"),
+
+    EDITOR_REWARD_TEMPLATE("editor-rewards.reward-template"),
+    EDITOR_REWARD_ADD("editor-rewards.items.add"),
+    EDITOR_REWARD_BACK("editor-rewards.items.back"),
+
+    EDITOR_REWARD_TYPE_ITEM("editor-reward-type.items.item"),
+    EDITOR_REWARD_TYPE_COMMAND("editor-reward-type.items.command"),
+    EDITOR_REWARD_TYPE_BACK("editor-reward-type.items.back"),
+
+    EDITOR_REWARD_SAVE("editor-reward-item-picker.items.save"),
+    EDITOR_REWARD_CANCEL("editor-reward-item-picker.items.cancel");
 
     private final String path;
 

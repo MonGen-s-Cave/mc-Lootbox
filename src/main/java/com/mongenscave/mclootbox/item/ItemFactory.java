@@ -5,6 +5,7 @@ import com.mongenscave.mclootbox.config.Config;
 import com.mongenscave.mclootbox.data.ItemData;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
+import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -200,6 +201,71 @@ public interface ItemFactory {
         }
     }
 
+    static void serializeItem(@NotNull ItemStack item, @NotNull YamlDocument config, @NotNull String path) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+
+        config.set(path + ".material", item.getType().name());
+
+        if (item.getAmount() > 1) {
+            config.set(path + ".amount", item.getAmount());
+        }
+
+        if (meta.hasDisplayName()) {
+            config.set(path + ".name", meta.getDisplayName());
+        }
+
+        if (meta.hasLore()) {
+            config.set(path + ".lore", meta.getLore());
+        }
+
+        if (!meta.getEnchants().isEmpty()) {
+            List<String> enchants = new ArrayList<>();
+            meta.getEnchants().forEach((enchant, level) -> {
+                enchant.getKey();
+                enchants.add(enchant.getKey().getKey() + ":" + level);
+            });
+
+            config.set(path + ".enchantments", enchants);
+        }
+
+        if (meta.isUnbreakable()) {
+            config.set(path + ".unbreakable", true);
+        }
+
+        if (meta.hasCustomModelData()) {
+            config.set(path + ".custom-model-data", meta.getCustomModelData());
+        }
+
+        if (!meta.getItemFlags().isEmpty()) {
+            List<String> flags = meta.getItemFlags().stream()
+                    .map(ItemFlag::name)
+                    .toList();
+
+            config.set(path + ".flag", flags);
+        }
+
+        if (meta instanceof LeatherArmorMeta leather) {
+            Color color = leather.getColor();
+            config.set(path + ".color", String.format(
+                    "#%02x%02x%02x",
+                    color.getRed(),
+                    color.getGreen(),
+                    color.getBlue()
+            ));
+        }
+
+        if (meta instanceof PotionMeta potion && potion.getColor() != null) {
+            Color color = potion.getColor();
+            config.set(path + ".color", String.format(
+                    "#%02x%02x%02x",
+                    color.getRed(),
+                    color.getGreen(),
+                    color.getBlue()
+            ));
+        }
+    }
+
     private static List<Integer> parseSmartSlots(Object slotConfig, Inventory inventory) {
         if (slotConfig == null) return Collections.emptyList();
 
@@ -326,7 +392,8 @@ public interface ItemFactory {
         return slots;
     }
 
-    private static List<Integer> getBorderSlots(int size) {
+    @NotNull
+    private static @Unmodifiable List<Integer> getBorderSlots(int size) {
         List<Integer> slots = new ArrayList<>();
         int rows = size / 9;
 

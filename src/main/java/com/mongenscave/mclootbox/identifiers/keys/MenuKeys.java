@@ -18,7 +18,16 @@ public enum MenuKeys {
     EDITOR_MAIN_MENU_SIZE("editor-main.size"),
 
     EDITOR_LOOTBOX_MENU_TITLE("editor-lootbox.title"),
-    EDITOR_LOOTBOX_MENU_SIZE("editor-lootbox.size");
+    EDITOR_LOOTBOX_MENU_SIZE("editor-lootbox.size"),
+
+    EDITOR_REWARD_LIST_TITLE("editor-rewards.title"),
+    EDITOR_REWARD_LIST_SIZE("editor-rewards.size"),
+
+    EDITOR_REWARD_TYPE_TITLE("editor-reward-type.title"),
+    EDITOR_REWARD_TYPE_SIZE("editor-reward-type.size"),
+
+    EDITOR_REWARD_ITEM_PICKER_TITLE("editor-reward-item-picker.title"),
+    EDITOR_REWARD_ITEM_PICKER_SIZE("editor-reward-item-picker.size");
 
     private static final Config config = McLootbox.getInstance().getGuis();
     private final String path;

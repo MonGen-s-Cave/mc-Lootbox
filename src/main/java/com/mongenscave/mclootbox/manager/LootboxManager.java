@@ -2,6 +2,7 @@ package com.mongenscave.mclootbox.manager;
 
 import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.identifiers.LootboxKeys;
+import com.mongenscave.mclootbox.identifiers.RewardGroupType;
 import com.mongenscave.mclootbox.item.ItemFactory;
 import com.mongenscave.mclootbox.model.*;
 import com.mongenscave.mclootbox.utils.LoggerUtils;

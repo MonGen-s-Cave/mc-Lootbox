@@ -4,6 +4,7 @@ import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.data.MenuController;
 import com.mongenscave.mclootbox.guis.Menu;
 import com.mongenscave.mclootbox.guis.impl.LootboxPreviewMenu;
+import com.mongenscave.mclootbox.identifiers.RewardGroupType;
 import com.mongenscave.mclootbox.identifiers.keys.ItemKeys;
 import com.mongenscave.mclootbox.identifiers.keys.MenuKeys;
 import com.mongenscave.mclootbox.item.ItemFactory;
@@ -81,12 +82,20 @@ public final class LootboxEditorLootboxMenu extends Menu {
         }
 
         if (ItemKeys.EDITOR_LOOTBOX_NORMAL_REWARDS.getSlot().contains(raw)) {
-            menuController.owner().sendMessage("Coming soon.");
+            LootboxEditorRewardListMenu.open(
+                    menuController.owner(),
+                    lootboxId,
+                    RewardGroupType.NORMAL
+            );
             return;
         }
 
         if (ItemKeys.EDITOR_LOOTBOX_FINAL_REWARDS.getSlot().contains(raw)) {
-            menuController.owner().sendMessage("Coming soon.");
+            LootboxEditorRewardListMenu.open(
+                    menuController.owner(),
+                    lootboxId,
+                    RewardGroupType.FINAL
+            );
         }
     }
 
