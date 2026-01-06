@@ -23,4 +23,8 @@ public final class RewardGroup {
     public Collection<LootboxReward> getRewards() {
         return rewards.values();
     }
+
+    public Map<String, LootboxReward> getRewardsMap() {
+        return rewards;
+    }
 }

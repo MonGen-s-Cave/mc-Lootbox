@@ -109,6 +109,36 @@ public final class LootboxManager {
         }, McLootbox.getInstance().getIoExecutor());
     }
 
+    public CompletableFuture<Boolean> removeReward(@NotNull String lootboxId, @NotNull RewardGroupType type, @NotNull String rewardId) {
+        Lootbox lootbox = lootboxes.get(lootboxId.toLowerCase(Locale.ROOT));
+        if (lootbox == null) return CompletableFuture.completedFuture(false);
+
+        RewardGroup group = type == RewardGroupType.NORMAL
+                ? lootbox.getNormalRewards()
+                : lootbox.getFinalRewards();
+
+        if (!group.getRewardsMap().containsKey(rewardId)) {
+            return CompletableFuture.completedFuture(false);
+        }
+
+        String path = type == RewardGroupType.NORMAL
+                ? "reward-settings.normal-rewards." + rewardId
+                : "reward-settings.final-rewards." + rewardId;
+
+        group.getRewardsMap().remove(rewardId);
+        lootbox.getConfig().remove(path);
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                lootbox.getConfig().save();
+                return true;
+            } catch (Exception exception) {
+                LoggerUtils.error("Failed to save lootbox '" + lootboxId + "' after removing reward '" + rewardId + "'");
+                return false;
+            }
+        }, McLootbox.getInstance().getIoExecutor());
+    }
+
     @NotNull
     public CompletableFuture<Boolean> createLootboxFile(@NotNull String id) {
         final String normalized = id.toLowerCase(Locale.ROOT);

@@ -28,6 +28,7 @@ public enum ItemKeys {
     EDITOR_LOOTBOX_NORMAL_REWARDS("editor-lootbox.items.normal-rewards"),
     EDITOR_LOOTBOX_FINAL_REWARDS("editor-lootbox.items.final-rewards"),
 
+    EDITOR_REWARD_TEMPLATE("editor-rewards.reward-template"),
     EDITOR_REWARD_ADD("editor-rewards.items.add"),
     EDITOR_REWARD_BACK("editor-rewards.items.back"),
 
