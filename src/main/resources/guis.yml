@@ -195,11 +195,15 @@ editor-rewards:
     name: "&#B8FFF2{reward_name} &8• &7{id}"
     lore:
       - ""
-      - " ◆ Chance: &#7CF6FF{chance}"
-      - " ◆ Give Item: &#8FA3B8{give_item}"
-      - " ◆ Commands: &#8A8F98{command_count}"
+      - " &#8FA3B8◆ &#C7D0D9Chance: &#7CF6FF{chance}"
+      - " &#8FA3B8◆ &#C7D0D9Give Item: &#8FA3B8{give_item}"
+      - " &#8FA3B8◆ &#C7D0D9Amount: &#8A8F98{amount}"
+      - ""
+      - " &#8FA3B8◆ &#C7D0D9Commands: &#8A8F98{commands}"
+      - "  &8› &7/{command} "
       - ""
       - "&7» Left click: Edit reward"
+      - "&7» Q-Key: Delete Reward"
     slot: fill
 
   items:

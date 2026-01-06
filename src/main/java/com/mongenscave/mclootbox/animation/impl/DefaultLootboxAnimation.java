@@ -16,6 +16,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
@@ -68,10 +69,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
     private void run(@NotNull AnimationContext context) {
         float openYaw = context.player().getLocation().getYaw();
-
-        Location base = context.player().getEyeLocation()
-                .add(context.player().getLocation().getDirection().normalize().multiply(2.8))
-                .add(0, -0.35, 0);
+        Location base = computeBase(context.player(), openYaw);
 
         ItemDisplay center = spawnCenter(base, context.displayItem());
 
@@ -92,8 +90,6 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         context.hologram().spawn();
 
         task[0] = McLootbox.getScheduler().runTaskTimer(() -> {
-            labels.forEach(RewardItemUtil::tick);
-
             try {
                 if (!context.player().isOnline()) {
                     cleanup(center, previews.values(), context);
@@ -111,6 +107,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
                             new Vector3f((float) (0.2 + 0.8 * ease)),
                             new Quaternionf()
                     ));
+
+                    labels.forEach(RewardItemUtil::tick);
 
                     tick[0]++;
                     return;
@@ -428,7 +426,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     private ItemDisplay spawnCenter(@NotNull Location base, @NotNull ItemStack item) {
         ItemDisplay d = base.getWorld().spawn(base, ItemDisplay.class);
         d.setItemStack(item.clone());
-
+        d.setBillboard(Display.Billboard.FIXED);
+        d.setRotation(base.getYaw(), 0f);
         return d;
     }
 
@@ -436,6 +435,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     private ItemDisplay spawnPreview(@NotNull Location base, ItemStack item) {
         ItemDisplay d = base.getWorld().spawn(base, ItemDisplay.class);
         d.setItemStack(item);
+        d.setBillboard(Display.Billboard.FIXED);
+        d.setRotation(base.getYaw(), 0f);
         d.setTransformation(new Transformation(
                 new Vector3f(),
                 new Quaternionf(),
@@ -462,11 +463,19 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
         for (ItemDisplay d : displays) {
             double angle = angleBase + (2 * Math.PI / size) * index++;
-            d.teleport(base.clone().add(
+
+            Location itemLoc = base.clone().add(
                     Math.cos(angle) * ORBIT_RADIUS,
                     ORBIT_Y,
                     Math.sin(angle) * ORBIT_RADIUS
-            ));
+            );
+
+            d.teleport(itemLoc);
+
+            RewardItemUtil label = getLabelFor(d);
+            if (label != null && label.label.isValid()) {
+                label.label.teleport(itemLoc.clone().add(0, 0.35, 0));
+            }
         }
     }
 
@@ -690,6 +699,24 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         ));
 
         labels.add(new RewardItemUtil(item, label));
+    }
+
+    @NotNull
+    private Location computeBase(@NotNull Player player, float yaw) {
+        Location playerLoc = player.getLocation();
+        World world = playerLoc.getWorld();
+
+        double radians = Math.toRadians(yaw);
+        double forwardX = -Math.sin(radians);
+        double forwardZ = Math.cos(radians);
+
+        double x = playerLoc.getX() + forwardX * 2.8;
+        double z = playerLoc.getZ() + forwardZ * 2.8;
+
+        int highest = world.getHighestBlockYAt((int) Math.floor(x), (int) Math.floor(z));
+        double y = highest + 2.2;
+
+        return new Location(world, x, y, z, yaw, 0f);
     }
 
     @Nullable

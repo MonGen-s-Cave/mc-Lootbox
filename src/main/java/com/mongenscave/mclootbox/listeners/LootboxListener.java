@@ -15,6 +15,7 @@ import com.mongenscave.mclootbox.model.LootboxReward;
 import com.mongenscave.mclootbox.model.RewardGroup;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -120,9 +121,7 @@ public final class LootboxListener implements Listener {
             return;
         }
 
-        Location origin = player.getEyeLocation()
-                .add(player.getLocation().getDirection().normalize().multiply(2.8))
-                .add(0, -0.35, 0);
+        Location origin = computeBase(player, player.getLocation().getYaw());
 
         LootboxHologram hologram = new LootboxTextHologram(origin, player, lootbox);
 
@@ -149,8 +148,23 @@ public final class LootboxListener implements Listener {
         }
     }
 
-    private record RollResult(
-            List<LootboxReward> normal,
-            List<LootboxReward> finalRewards
-    ) {}
+    @NotNull
+    private Location computeBase(@NotNull Player player, float yaw) {
+        Location playerLoc = player.getLocation();
+        World world = playerLoc.getWorld();
+
+        double radians = Math.toRadians(yaw);
+        double forwardX = -Math.sin(radians);
+        double forwardZ = Math.cos(radians);
+
+        double x = playerLoc.getX() + forwardX * 2.8;
+        double z = playerLoc.getZ() + forwardZ * 2.8;
+
+        int highest = world.getHighestBlockYAt((int) Math.floor(x), (int) Math.floor(z));
+        double y = highest + 2.2;
+
+        return new Location(world, x, y, z, yaw, 0f);
+    }
+
+    private record RollResult(List<LootboxReward> normal, List<LootboxReward> finalRewards) {}
 }
