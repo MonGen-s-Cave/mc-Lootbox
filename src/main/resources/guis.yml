@@ -186,4 +186,138 @@ editor-lootbox:
         - ""
         - "&#8A8F98» &#C7D0D9Left click: &#FFFFFFOpen"
 
+editor-rewards:
+  title: "&8          ʀᴇᴡᴀʀᴅ ᴇᴅɪᴛᴏʀ"
+  size: 36
+
+  reward-template:
+    material: CHEST
+    name: "&#B8FFF2{reward_name} &8• &7{id}"
+    lore:
+      - ""
+      - " ◆ Chance: &#7CF6FF{chance}"
+      - " ◆ Give Item: &#8FA3B8{give_item}"
+      - " ◆ Commands: &#8A8F98{command_count}"
+      - ""
+      - "&7» Left click: Edit reward"
+    slot: fill
+
+  items:
+    add:
+      material: TORCHFLOWER_SEEDS
+      priority: 10
+      name: "&#6DFF9E&l+ &#B8FFD0Create Reward"
+      lore:
+        - ""
+        - " &#8FA3B8◆ &#C7D0D9Create a new reward"
+        - ""
+        - "&7» Left click: Create"
+      slot: [32]
+
+    back:
+      material: IRON_DOOR
+      priority: 5
+      name: "&#8FA3B8Back"
+      lore:
+        - ""
+        - "&7» Left click: Go back"
+      slot: [31]
+
+    decoration:
+      material: GRAY_STAINED_GLASS_PANE
+      slot: [27,28,29,30,33,34,35]
+      name: '&f'
+
+editor-reward-type:
+  title: "&8            ʀᴇᴡᴀʀᴅ ᴛʏᴘᴇ"
+  size: 27
+
+  items:
+    command:
+      material: COMMAND_BLOCK_MINECART
+      name: "&#7CF6FFCommand Reward"
+      lore:
+        - ""
+        - " &#8FA3B8◆ &#C7D0D9Item is visual only"
+        - " &#8FA3B8◆ &#C7D0D9give-item: &#FF9A9Afalse"
+        - " &#8FA3B8◆ &#C7D0D9Commands grant the reward"
+        - ""
+        - "&7» Left click: Select"
+      slot: [11]
+
+    command-filler:
+      material: LIGHT_BLUE_STAINED_GLASS_PANE
+      name: " "
+      slot: [1, 2, 3, 10, 12, 19, 20, 21]
+
+    item:
+      material: CHEST_MINECART
+      name: "&#B8FFF2Item Reward"
+      lore:
+        - ""
+        - " &#8FA3B8◆ &#C7D0D9Player receives the item"
+        - " &#8FA3B8◆ &#C7D0D9give-item: &#7CF6FFtrue"
+        - ""
+        - "&7» Left click: Select"
+      slot: [15]
+
+    item-filler:
+      material: BROWN_STAINED_GLASS_PANE
+      name: " "
+      slot: [5, 6, 7, 14, 16, 23, 24, 25]
+
+    back:
+      material: IRON_DOOR
+      name: "&#8FA3B8Back"
+      lore:
+        - ""
+        - "&7» Left click: Go back"
+      slot: [18]
+
+    filler:
+      material: GRAY_STAINED_GLASS_PANE
+      priority: 1
+      name: " "
+      slot: fill
+
+editor-reward-item-picker:
+  title: "&8            ɪᴛᴇᴍ ᴘɪᴄᴋᴇʀ"
+  size: 27
+
+  picked-item:
+    slot: 13
+
+  items:
+    save:
+      material: LIME_CONCRETE
+      name: "&#41E97CSave Reward"
+      lore:
+        - ""
+        - " &#8FA3B8◆ &#C7D0D9Saves the selected item "
+        - ""
+        - "&7» Left click: Save"
+      slot: [16]
+    save-decoration:
+      material: LIME_STAINED_GLASS_PANE
+      name: " "
+      slot: [6, 7, 8, 15, 17, 24, 25, 26]
+
+    cancel:
+      material: RED_CONCRETE
+      name: "&#FF9A9ACancel"
+      lore:
+        - ""
+        - "&7» Left click: Cancel"
+      slot: [10]
+
+    cancel-decoration:
+      material: RED_STAINED_GLASS_PANE
+      name: " "
+      slot: [0, 1, 2, 9, 11, 18, 19, 20]
+
+    filler:
+      material: GRAY_STAINED_GLASS_PANE
+      name: " "
+      slot: [3, 4, 5, 12, 14, 21, 22, 23]
+
 version: '1'

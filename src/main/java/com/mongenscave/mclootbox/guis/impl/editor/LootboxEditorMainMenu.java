@@ -202,7 +202,7 @@ public final class LootboxEditorMainMenu extends PaginatedMenu {
 
     private boolean isKeySlot(int raw, @NotNull ItemKeys key) {
         ItemStack item = key.getItem();
-        List<Integer> slots = key.getSlot();
+        List<Integer> slots = key.getSlots();
 
         if (item == null || slots == null || slots.isEmpty()) return false;
 

@@ -33,7 +33,7 @@ public final class LootboxPreviewMenu extends Menu {
         ItemFactory.setItemsForMenu("preview-menu.items", inventory);
 
         ItemStack close = ItemKeys.PREVIEW_CLOSE.getItem();
-        for (int slot : ItemKeys.PREVIEW_CLOSE.getSlot()) {
+        for (int slot : ItemKeys.PREVIEW_CLOSE.getSlots()) {
             inventory.setItem(slot, close);
         }
 
@@ -104,7 +104,7 @@ public final class LootboxPreviewMenu extends Menu {
         int raw = event.getRawSlot();
         if (raw >= inventory.getSize()) return;
 
-        if (ItemKeys.PREVIEW_CLOSE.getSlot().contains(raw)) {
+        if (ItemKeys.PREVIEW_CLOSE.getSlots().contains(raw)) {
             menuController.owner().closeInventory();
             close();
         }

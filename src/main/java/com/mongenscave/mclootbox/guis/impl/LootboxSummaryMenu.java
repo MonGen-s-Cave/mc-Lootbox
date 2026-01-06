@@ -30,7 +30,7 @@ public final class LootboxSummaryMenu extends Menu {
         ItemFactory.setItemsForMenu("summary-menu.items", inventory);
 
         ItemStack close = ItemKeys.SUMMARY_CLOSE.getItem();
-        for (int slot : ItemKeys.SUMMARY_CLOSE.getSlot()) {
+        for (int slot : ItemKeys.SUMMARY_CLOSE.getSlots()) {
             inventory.setItem(slot, close);
         }
 
@@ -101,7 +101,7 @@ public final class LootboxSummaryMenu extends Menu {
 
         if (raw >= size) return;
 
-        if (ItemKeys.SUMMARY_CLOSE.getSlot().contains(raw)) {
+        if (ItemKeys.SUMMARY_CLOSE.getSlots().contains(raw)) {
             menuController.owner().closeInventory();
             close();
         }

@@ -1,6 +1,7 @@
 package com.mongenscave.mclootbox.model;
 
 import com.mongenscave.mclootbox.item.ItemFactory;
+import com.mongenscave.mclootbox.utils.ItemUtil;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import lombok.Getter;
 import org.bukkit.inventory.ItemStack;
@@ -45,6 +46,14 @@ public final class LootboxReward {
 
     public Optional<ItemStack> createGivenItem() {
         if (!giveItem || itemSection == null) return Optional.empty();
+
+        String serialized = itemSection.getString("serialized");
+        if (serialized != null && !serialized.isEmpty()) {
+            try {
+                return Optional.of(ItemUtil.deserialize(serialized));
+            } catch (Exception ignored) {}
+        }
+
         return ItemFactory.buildItem(itemSection, itemPath);
     }
 }

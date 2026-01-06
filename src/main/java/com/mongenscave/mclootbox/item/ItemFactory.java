@@ -4,6 +4,7 @@ import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.config.Config;
 import com.mongenscave.mclootbox.data.ItemData;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
+import com.mongenscave.mclootbox.utils.ItemUtil;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
@@ -201,10 +202,11 @@ public interface ItemFactory {
         }
     }
 
-    static void serializeItem(@NotNull ItemStack item, @NotNull YamlDocument config, @NotNull String path) {
+    static void serializeItem(@NotNull ItemStack item, @NotNull YamlDocument config, @NotNull String path) throws Exception {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
+        config.set(path + ".serialized", ItemUtil.serialize(item));
         config.set(path + ".material", item.getType().name());
 
         if (item.getAmount() > 1) {

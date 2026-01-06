@@ -4,6 +4,7 @@ import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.data.MenuController;
 import com.mongenscave.mclootbox.guis.Menu;
 import com.mongenscave.mclootbox.guis.impl.LootboxPreviewMenu;
+import com.mongenscave.mclootbox.guis.impl.editor.reward.LootboxEditorRewardListMenu;
 import com.mongenscave.mclootbox.identifiers.RewardGroupType;
 import com.mongenscave.mclootbox.identifiers.keys.ItemKeys;
 import com.mongenscave.mclootbox.identifiers.keys.MenuKeys;
@@ -53,7 +54,7 @@ public final class LootboxEditorLootboxMenu extends Menu {
             return;
         }
 
-        if (ItemKeys.EDITOR_LOOTBOX_BACK.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_LOOTBOX_BACK.getSlots().contains(raw)) {
             LootboxEditorMainMenu.open(menuController.owner());
             return;
         }
@@ -66,22 +67,22 @@ public final class LootboxEditorLootboxMenu extends Menu {
 
         Lootbox lootbox = optional.get();
 
-        if (ItemKeys.EDITOR_LOOTBOX_PREVIEW.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_LOOTBOX_PREVIEW.getSlots().contains(raw)) {
             new LootboxPreviewMenu(menuController, lootbox).open();
             return;
         }
 
-        if (ItemKeys.EDITOR_LOOTBOX_ITEM.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_LOOTBOX_ITEM.getSlots().contains(raw)) {
             menuController.owner().sendMessage("Coming soon.");
             return;
         }
 
-        if (ItemKeys.EDITOR_LOOTBOX_VISUAL.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_LOOTBOX_VISUAL.getSlots().contains(raw)) {
             menuController.owner().sendMessage("Coming soon.");
             return;
         }
 
-        if (ItemKeys.EDITOR_LOOTBOX_NORMAL_REWARDS.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_LOOTBOX_NORMAL_REWARDS.getSlots().contains(raw)) {
             LootboxEditorRewardListMenu.open(
                     menuController.owner(),
                     lootboxId,
@@ -90,7 +91,7 @@ public final class LootboxEditorLootboxMenu extends Menu {
             return;
         }
 
-        if (ItemKeys.EDITOR_LOOTBOX_FINAL_REWARDS.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_LOOTBOX_FINAL_REWARDS.getSlots().contains(raw)) {
             LootboxEditorRewardListMenu.open(
                     menuController.owner(),
                     lootboxId,
@@ -119,7 +120,7 @@ public final class LootboxEditorLootboxMenu extends Menu {
         ItemStack item = key.getItem();
         if (item == null) return;
 
-        for (int slot : key.getSlot()) {
+        for (int slot : key.getSlots()) {
             inventory.setItem(slot, item);
         }
     }

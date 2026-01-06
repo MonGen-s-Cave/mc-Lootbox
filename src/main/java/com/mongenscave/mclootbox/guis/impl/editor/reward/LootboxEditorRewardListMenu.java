@@ -1,8 +1,9 @@
-package com.mongenscave.mclootbox.guis.impl.editor;
+package com.mongenscave.mclootbox.guis.impl.editor.reward;
 
 import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.data.MenuController;
 import com.mongenscave.mclootbox.guis.Menu;
+import com.mongenscave.mclootbox.guis.impl.editor.LootboxEditorLootboxMenu;
 import com.mongenscave.mclootbox.identifiers.RewardGroupType;
 import com.mongenscave.mclootbox.identifiers.keys.ItemKeys;
 import com.mongenscave.mclootbox.identifiers.keys.MenuKeys;
@@ -63,7 +64,12 @@ public final class LootboxEditorRewardListMenu extends Menu {
         event.setCancelled(true);
         if (raw >= topSize) return;
 
-        if (ItemKeys.EDITOR_REWARD_ADD.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_REWARD_BACK.getSlots().contains(raw)) {
+            new LootboxEditorLootboxMenu(menuController, lootboxId).open();
+            return;
+        }
+
+        if (ItemKeys.EDITOR_REWARD_ADD.getSlots().contains(raw)) {
             LootboxEditorRewardTypeMenu.open(
                     menuController.owner(),
                     lootboxId,

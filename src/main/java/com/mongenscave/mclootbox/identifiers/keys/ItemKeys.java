@@ -28,7 +28,6 @@ public enum ItemKeys {
     EDITOR_LOOTBOX_NORMAL_REWARDS("editor-lootbox.items.normal-rewards"),
     EDITOR_LOOTBOX_FINAL_REWARDS("editor-lootbox.items.final-rewards"),
 
-    EDITOR_REWARD_TEMPLATE("editor-rewards.reward-template"),
     EDITOR_REWARD_ADD("editor-rewards.items.add"),
     EDITOR_REWARD_BACK("editor-rewards.items.back"),
 
@@ -37,7 +36,8 @@ public enum ItemKeys {
     EDITOR_REWARD_TYPE_BACK("editor-reward-type.items.back"),
 
     EDITOR_REWARD_SAVE("editor-reward-item-picker.items.save"),
-    EDITOR_REWARD_CANCEL("editor-reward-item-picker.items.cancel");
+    EDITOR_REWARD_CANCEL("editor-reward-item-picker.items.cancel"),
+    EDITOR_REWARD_ITEM_SLOT("editor-reward-item-picker.picked-item");
 
     private final String path;
 
@@ -45,7 +45,11 @@ public enum ItemKeys {
         this.path = path;
     }
 
-    public List<Integer> getSlot() {
+    public int getSlot() {
+        return McLootbox.getInstance().getGuis().getInt(path + ".slot");
+    }
+
+    public List<Integer> getSlots() {
         return McLootbox.getInstance().getGuis().getIntList(path + ".slot");
     }
 

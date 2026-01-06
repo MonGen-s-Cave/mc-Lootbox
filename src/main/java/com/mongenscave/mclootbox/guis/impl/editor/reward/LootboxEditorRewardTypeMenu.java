@@ -1,4 +1,4 @@
-package com.mongenscave.mclootbox.guis.impl.editor;
+package com.mongenscave.mclootbox.guis.impl.editor.reward;
 
 import com.mongenscave.mclootbox.data.MenuController;
 import com.mongenscave.mclootbox.guis.Menu;
@@ -40,7 +40,12 @@ public final class LootboxEditorRewardTypeMenu extends Menu {
         int raw = event.getRawSlot();
         event.setCancelled(true);
 
-        if (ItemKeys.EDITOR_REWARD_TYPE_ITEM.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_REWARD_TYPE_BACK.getSlots().contains(raw)) {
+            new LootboxEditorRewardListMenu(menuController, lootboxId, type).open();
+            return;
+        }
+
+        if (ItemKeys.EDITOR_REWARD_TYPE_ITEM.getSlots().contains(raw)) {
             LootboxEditorRewardItemPicker.open(
                     menuController.owner(),
                     lootboxId,
@@ -50,7 +55,7 @@ public final class LootboxEditorRewardTypeMenu extends Menu {
             return;
         }
 
-        if (ItemKeys.EDITOR_REWARD_TYPE_COMMAND.getSlot().contains(raw)) {
+        if (ItemKeys.EDITOR_REWARD_TYPE_COMMAND.getSlots().contains(raw)) {
             LootboxEditorRewardItemPicker.open(
                     menuController.owner(),
                     lootboxId,
@@ -80,7 +85,7 @@ public final class LootboxEditorRewardTypeMenu extends Menu {
         ItemStack item = key.getItem();
         if (item == null) return;
 
-        for (int slot : key.getSlot()) {
+        for (int slot : key.getSlots()) {
             inventory.setItem(slot, item);
         }
     }
