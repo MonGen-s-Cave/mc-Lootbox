@@ -5,13 +5,13 @@ import com.mongenscave.mclootbox.McLootbox;
 import com.mongenscave.mclootbox.animation.*;
 import com.mongenscave.mclootbox.animation.utils.GlowUtil;
 import com.mongenscave.mclootbox.animation.utils.RewardItemUtil;
+import com.mongenscave.mclootbox.hologram.LootboxTextHologram;
 import com.mongenscave.mclootbox.model.LootboxReward;
 import com.mongenscave.mclootbox.processor.MessageProcessor;
 import com.mongenscave.mclootbox.service.LootboxBroadcastService;
 import com.mongenscave.mclootbox.service.LootboxRewardService;
 import com.mongenscave.mclootbox.service.LootboxSummaryService;
 import com.mongenscave.mclootbox.utils.LoggerUtils;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
 import org.bukkit.entity.Display;
@@ -57,8 +57,8 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     private static final int FINAL_RISE_DURATION = 20;
     private static final double FINAL_RISE_Y = 0.30;
 
-    private static final int FINAL_SUSPENSE_CYCLES = 14;
-    private static final int FINAL_SUSPENSE_STEP_TICKS = 6;
+    private static final int FINAL_SUSPENSE_CYCLES = 7;
+    private static final int FINAL_SUSPENSE_STEP_TICKS = 3;
     private static final float FINAL_SUSPENSE_SCALE = 0.65f;
     private static final int FINAL_SUSPENSE_RESET_DELAY = 8;
 
@@ -371,7 +371,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
 
                 context.player().playSound(
                         context.player().getLocation(),
-                        Sound.UI_TOAST_CHALLENGE_COMPLETE,
+                        "minelush.gui.congratulations",
                         1.0f,
                         1.0f
                 );
@@ -449,7 +449,11 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
     @NotNull
     @Contract("_ -> new")
     private ItemStack previewItem(@NotNull LootboxReward reward) {
-        return new ItemStack(Material.valueOf(reward.getMaterial().toUpperCase()));
+        return reward.createDisplayItem()
+                .map(ItemStack::clone)
+                .orElseGet(() -> new ItemStack(
+                        Material.valueOf(reward.getMaterial().toUpperCase())
+                ));
     }
 
     private Quaternionf yawRotation(float yaw) {
@@ -682,9 +686,12 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         String raw = reward.getName();
         String name = raw != null && !raw.isEmpty() ? raw : reward.getMaterial();
 
+        String text = MessageProcessor.process(name);
+        text = LootboxTextHologram.translateHex(text);
+
         TextDisplay label = item.getWorld().spawn(item.getLocation().clone().add(0, 0.35, 0), TextDisplay.class);
 
-        label.text(Component.text(MessageProcessor.process(name)));
+        label.text(LootboxTextHologram.deserializeLegacy(text));
         label.setBillboard(Display.Billboard.VERTICAL);
         label.setShadowed(true);
         label.setViewRange(32.0f);

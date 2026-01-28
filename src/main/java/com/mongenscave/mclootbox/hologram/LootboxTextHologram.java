@@ -133,7 +133,7 @@ public final class LootboxTextHologram implements LootboxHologram {
         return null;
     }
 
-    private static @NotNull Component deserializeLegacy(@NotNull String input) {
+    public static @NotNull Component deserializeLegacy(@NotNull String input) {
         if (input.indexOf('§') >= 0) {
             return LEGACY_SECTION.deserialize(input);
         }
@@ -141,7 +141,7 @@ public final class LootboxTextHologram implements LootboxHologram {
         return LEGACY_AMP.deserialize(input);
     }
 
-    private static @NotNull String translateHex(@NotNull String input) {
+    public static @NotNull String translateHex(@NotNull String input) {
         char code = input.indexOf('§') >= 0 ? '§' : '&';
 
         Matcher matcher = HEX.matcher(input);

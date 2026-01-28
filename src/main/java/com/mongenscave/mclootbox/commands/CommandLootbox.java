@@ -85,7 +85,7 @@ public class CommandLootbox {
                         entry -> new LootboxSummaryMenu(
                                 MenuController.getMenuUtils(player),
                                 entry
-                        ).open(), () -> player.sendMessage("§cThis summary is no longer available.")
+                        ).open(), () -> player.sendMessage(MessageProcessor.process("<glyph:chat_error> &#CA6060Ez a lootbox előnézet már nem elérhető.."))
                 );
     }
 
