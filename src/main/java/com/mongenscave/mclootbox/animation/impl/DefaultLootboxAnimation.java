@@ -694,6 +694,7 @@ public final class DefaultLootboxAnimation implements LootboxAnimation {
         label.text(LootboxTextHologram.deserializeLegacy(text));
         label.setBillboard(Display.Billboard.VERTICAL);
         label.setShadowed(true);
+        label.setPersistent(false);
         label.setViewRange(32.0f);
         label.setDefaultBackground(false);
         label.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));

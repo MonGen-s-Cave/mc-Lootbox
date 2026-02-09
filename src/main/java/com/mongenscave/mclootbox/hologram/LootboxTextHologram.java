@@ -84,6 +84,7 @@ public final class LootboxTextHologram implements LootboxHologram {
 
             display.setAlignment(TextDisplay.TextAlignment.CENTER);
             display.setBillboard(billboard);
+            display.setPersistent(false);
             display.setShadowed(shadow);
             display.setViewRange(64.0f);
             display.setDefaultBackground(false);
